@@ -31,11 +31,18 @@
     <!-- Include Tailwind CSS via CDN for rapid styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            scroll-behavior: smooth;
-        }
+<!-- Leaflet CSS -->
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-o9N1j7BYJXBqGSI6WsPytgkSH1gfK2Jzjtjt18PdIkA="
+  crossorigin=""
+/>
+<style>
+    body {
+        font-family: 'Inter', sans-serif;
+        scroll-behavior: smooth;
+    }
         /* Scroll to top button styling */
         #scrollToTopBtn {
             display: none;
@@ -192,9 +199,9 @@
                         </div>
                         <!-- Map container now appears on the right side on larger screens. -->
                         <div id="map-container" class="relative w-full md:w-1/2 h-48 md:h-60 bg-blue-50 rounded-lg overflow-hidden order-1 md:order-2">
-                            <img id="world-map" src="./world-map.png" alt="World map" class="absolute inset-0 w-full h-full object-cover opacity-90" />
-                            <div id="map-marker" class="absolute"></div>
-                        </div>
+    <!-- Leaflet map will be rendered here -->
+    <div id="leaflet-map" class="absolute inset-0 w-full h-full"></div>
+</div>
                     </div>
                 </div>
                 <div id="foods-box">
@@ -4653,17 +4660,43 @@ function renderEssentialPhrasesForCategory() {
                 kg: 'lbs',
                 lbs: 'kg'
             };
+          // Initialise Leaflet map and marker
+leafletMap = L.map('leaflet-map', {
+  attributionControl: false,
+  zoomControl: false,
+}).setView([0, 0], 2);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 8,
+}).addTo(leafletMap);
+
+leafletMarker = L.marker([0, 0]).addTo(leafletMap);
+
+// The rest of your existing DOMContentLoaded code follows here...
+function syncMeasurementPair(changedSelect) {
+    /* existing logic */
+}
           // >>> ADD THESE LINES <<<
     // Ensure the marker is positioned once the world-map image has loaded.
     const worldMapImg = document.getElementById('world-map');
     if (worldMapImg) {
         worldMapImg.addEventListener('load', () => {
             const geo = countryGeo[countrySelect.value];
-            if (geo) {
-                positionMapMarker(geo.lat, geo.lon);
-            }
-        });
+if (geo && leafletMap && leafletMarker) {
+    // Set Leaflet map view and marker position
+    leafletMap.setView([geo.lat, geo.lon], 4);
+    leafletMarker.setLatLng([geo.lat, geo.lon]);
+
+    // Update the location/climate description as before
+    if (locationDescriptionEl) {
+        locationDescriptionEl.innerHTML = `
+            <div class="font-bold text-center mb-4">Location</div>
+            <div class="text-left mb-6">${geo.locationDesc}</div>
+            <div class="font-bold text-center mb-4">Climate</div>
+            <div class="text-left">${geo.weatherDesc}</div>
+        `;
     }
+}
     // >>> END OF NEW CODE <<<
 
     // (Your existing code continues here...)
@@ -4794,6 +4827,22 @@ function renderEssentialPhrasesForCategory() {
                 });
             }
         });
+      <!-- Leaflet JS -->
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-o+qQHFl0vW85pN6W8g+hcuA2aZc6Ovx5RAzzPc25uRk="
+  crossorigin=""
+></script>
+
+<!-- JavaScript for dynamic behaviour -->
+<script>
+    // Declare Leaflet map and marker variables
+    let leafletMap;
+    let leafletMarker;
+
+    // Country data: a small sample of destinations with history, attractions ...
+    const countriesData = {
+        // ...
     </script>
 </body>
 </html>
