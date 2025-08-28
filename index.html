@@ -4354,23 +4354,27 @@
     const height = mapContainer.offsetHeight;
     if (!width || !height || !mapEl) return;
 
-    // Work out the natural aspect ratio of the image (width / height)
-    const imgAspect = mapEl.naturalWidth / mapEl.naturalHeight;
-    // Aspect ratio of the container
+    // Try to get the actual aspect ratio of the map image.
+    let imgAspect;
+    if (mapEl.naturalWidth && mapEl.naturalHeight) {
+        imgAspect = mapEl.naturalWidth / mapEl.naturalHeight;
+    } else {
+        // Fall back to the known aspect ratio of your map (2:1).
+        imgAspect = 2;
+    }
+
     const containerAspect = width / height;
 
     let x, y;
     if (containerAspect > imgAspect) {
-        // Container is wider than the image’s aspect ratio.
-        // The image covers the full height and is centered horizontally.
+        // Image is scaled to full height; horizontal cropping occurs.
         const scaledHeight = height;
         const scaledWidth  = scaledHeight * imgAspect;
         const offsetX = (width - scaledWidth) / 2;
         x = offsetX + ((lon + 180) / 360) * scaledWidth;
         y = ((90 - lat) / 180) * scaledHeight;
     } else {
-        // Container is taller than the image’s aspect ratio.
-        // The image covers the full width and is centered vertically.
+        // Image is scaled to full width; vertical cropping occurs.
         const scaledWidth  = width;
         const scaledHeight = scaledWidth / imgAspect;
         const offsetY = (height - scaledHeight) / 2;
@@ -4649,6 +4653,20 @@ function renderEssentialPhrasesForCategory() {
                 kg: 'lbs',
                 lbs: 'kg'
             };
+          // >>> ADD THESE LINES <<<
+    // Ensure the marker is positioned once the world-map image has loaded.
+    const worldMapImg = document.getElementById('world-map');
+    if (worldMapImg) {
+        worldMapImg.addEventListener('load', () => {
+            const geo = countryGeo[countrySelect.value];
+            if (geo) {
+                positionMapMarker(geo.lat, geo.lon);
+            }
+        });
+    }
+    // >>> END OF NEW CODE <<<
+
+    // (Your existing code continues here...)
             function syncMeasurementPair(changedSelect) {
                 if (!changedSelect) return;
                 const pair = measurementPairsDOM[changedSelect.value];
