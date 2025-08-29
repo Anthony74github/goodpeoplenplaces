@@ -30,6 +30,8 @@
     <title>Good People n Places</title>
     <!-- Include Tailwind CSS via CDN for rapid styling -->
     <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Supabase JS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -249,7 +251,6 @@
                                 <option value="directions">Directions</option>
                             </select>
                             <ul id="essential-phrases-list" class="list-disc list-inside space-y-1 text-gray-700"></ul>
-<p id="phrases-note" class="text-xs text-gray-600 mt-2 hidden"></p>
                         </div>
                     </div>
                 </div>
@@ -519,6 +520,10 @@
 
     <!-- JavaScript for dynamic behaviour -->
     <script>
+      const SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRtY3hidGRqamd3Zm9xZGZqdXBuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0OTcyMzEsImV4cCI6MjA3MjA3MzIzMX0.h_qa51FcNT6P62AQoJjjoef7Qv2QD3h3LYBJWua0-Po';
+const SUPABASE_BUCKET = 'trip-photos';
+const API_BASE = ''; // same-origin API on Vercel
         // Country data: a small sample of destinations with history, attractions, foods and practical information.
         const countriesData = {
             'Australia': {
@@ -3716,110 +3721,6 @@
         const commentPhoto = document.getElementById('comment-photo');
         const commentText = document.getElementById('comment-text');
         const commentsDisplay = document.getElementById('comments-display');
-
-// --- Join + Profile gating & Local Posts ---
-function getProfile() {
-    try { return JSON.parse(localStorage.getItem('userProfile') || 'null'); } catch { return null; }
-}
-function setProfile(p) {
-    localStorage.setItem('userProfile', JSON.stringify(p));
-}
-function readPosts() {
-    try { return JSON.parse(localStorage.getItem('tripPosts') || '[]'); } catch { return []; }
-}
-function writePosts(items) {
-    localStorage.setItem('tripPosts', JSON.stringify(items));
-}
-function enableCommentForm(enabled) {
-    const inputs = Array.from(commentForm.querySelectorAll('input, textarea, select, button[type="submit"]'));
-    inputs.forEach(el => {
-        if (el.id === 'comment-country') return;
-        el.disabled = !enabled && el.type !== 'hidden';
-    });
-    const submitBtn = commentForm.querySelector('button[type="submit"]');
-    if (submitBtn) submitBtn.textContent = enabled ? 'Add Comment' : 'Join to Post';
-}
-function applyProfileUI() {
-    const profile = getProfile();
-    const profileArea = document.getElementById('profile-area');
-    const uName = document.getElementById('profile-username');
-    const uFrom = document.getElementById('profile-from');
-    const uGreeting = document.getElementById('profile-greeting');
-    if (profile) {
-        profileArea?.classList.remove('hidden');
-        if (uName) uName.textContent = profile.username || '';
-        if (uFrom) uFrom.textContent = profile.from || '';
-        if (uGreeting) uGreeting.textContent = profile.greeting || '';
-        enableCommentForm(true);
-        if (commentName) { commentName.value = profile.username || ''; }
-    } else {
-        profileArea?.classList.add('hidden');
-        enableCommentForm(false);
-        if (commentName) { commentName.value = ''; }
-    }
-}
-function renderPosts() {
-    const posts = readPosts().sort((a,b)=>b.ts-a.ts);
-    const me = getProfile();
-    commentsDisplay.innerHTML = posts.map(post => {
-        const canDelete = !!(me && me.username === (post.by?.username));
-        return (
-`<div class="p-4 bg-white rounded-lg shadow-xl border border-gray-200 transform transition duration-300 hover:-translate-y-1 hover:shadow-2xl">
-  ${post.photoDataUrl ? `<img src="${post.photoDataUrl}" alt="Trip photo" class="w-full h-64 object-cover rounded-md mb-3">` : ''}
-  <p class="text-gray-800 whitespace-pre-wrap mb-2">${post.text || ''}</p>
-  <div class="text-sm text-gray-600 flex justify-between items-center">
-    <span>By <span class="font-semibold">${post.name || (post.by?.username) || 'Anonymous'}</span> • ${post.country || ''}</span>
-    ${canDelete ? `<button data-delete="${post.id}" class="text-red-600 hover:underline">Delete</button>` : ''}
-  </div>
-</div>`
-        );
-    }).join('');
-}
-// Event delegation for delete
-commentsDisplay?.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-delete]');
-    if (!btn) return;
-    const id = btn.getAttribute('data-delete');
-    if (confirm('Delete this post?')) {
-        const posts = readPosts().filter(p => String(p.id) !== String(id));
-        writePosts(posts);
-        renderPosts();
-    }
-});
-
-// Join modal logic
-(function initJoin() {
-    const joinBtn = document.getElementById('join-btn');
-    const overlay = document.getElementById('join-overlay');
-    const joinForm = document.getElementById('join-form');
-    const cancelBtn = document.getElementById('join-cancel');
-    const logoutBtn = document.getElementById('logout-btn');
-
-    function openOverlay(){ overlay?.classList.remove('hidden'); }
-    function closeOverlay(){ overlay?.classList.add('hidden'); }
-
-    joinBtn?.addEventListener('click', openOverlay);
-    cancelBtn?.addEventListener('click', closeOverlay);
-    logoutBtn?.addEventListener('click', () => { localStorage.removeItem('userProfile'); applyProfileUI(); renderPosts(); });
-
-    joinForm?.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const username = (document.getElementById('join-username')?.value || '').trim();
-        const from = (document.getElementById('join-from')?.value || '').trim();
-        const greeting = (document.getElementById('join-greeting')?.value || '').trim();
-        if (!username) { alert('Please enter a username.'); return; }
-        setProfile({ username, from, greeting });
-        closeOverlay();
-        applyProfileUI();
-    });
-})();
-
-// Initialize on load
-window.addEventListener('DOMContentLoaded', () => {
-    applyProfileUI();
-    renderPosts();
-});
-
         const scrollBtn = document.getElementById('scrollToTopBtn');
 
         // Elements for newly added informational sections
@@ -4162,17 +4063,6 @@ window.addEventListener('DOMContentLoaded', () => {
                 categorySelect.value = 'greetings';
             }
             renderEssentialPhrasesForCategory();
-            const phrasesNoteEl = document.getElementById('phrases-note');
-            if (phrasesNoteEl) {
-                if (countryName === 'Thailand') {
-                    phrasesNoteEl.textContent = 'Generally, females use "ka" and males use "krap" after some statements or questions to be more polite.';
-                    phrasesNoteEl.classList.remove('hidden');
-                } else {
-                    phrasesNoteEl.textContent = '';
-                    phrasesNoteEl.classList.add('hidden');
-                }
-            }
-
             // Emergency contacts (display numbers in red) and U.S. Embassy info in purple
             emergencyList.innerHTML = '';
             data.emergencyContacts.forEach(contact => {
@@ -4678,19 +4568,6 @@ function renderEssentialPhrasesForCategory() {
         li.innerHTML = `<span class="font-medium">${eng}:</span> ${cleanTrans}`;
         listEl.appendChild(li);
     });
-
-    // Ensure Thailand politeness note visibility stays in sync with category changes
-    const noteEl = document.getElementById('phrases-note');
-    const countrySel = document.getElementById('country-select');
-    if (noteEl && countrySel) {
-        if (countrySel.value === 'Thailand') {
-            noteEl.textContent = 'Generally, females use "ka" and males use "krap" after some statements or questions to be more polite.';
-            noteEl.classList.remove('hidden');
-        } else {
-            noteEl.textContent = '';
-            noteEl.classList.add('hidden');
-        }
-    }
 }
 
         /**
@@ -4713,48 +4590,17 @@ function renderEssentialPhrasesForCategory() {
          * display.  The form is then reset.  No data is sent anywhere.
          * @param {Event} e The form submit event
          */
-        
-function handleCommentSubmit(e) {
-    e.preventDefault();
-    const me = getProfile();
-    if (!me) { alert('Please Join first.'); return; }
-    const name = commentName.value.trim() || me.username;
-    const country = commentCountrySelect.value;
-    const text = commentText.value.trim();
-    const file = commentPhoto.files[0];
-
-    // Require exactly one comment and allow at most one photo. (Form provides one file input, so at most one photo.)
-    if (!text) { alert('Please add a comment.'); return; }
-    // photo is optional, but if provided must be an image
-    if (file && !file.type.startsWith('image/')) { alert('Please upload an image file.'); return; }
-
-    const savePost = (photoDataUrl) => {
-        const post = {
-            id: Date.now(),
-            by: { username: me.username },
-            name, country, text,
-            photoDataUrl: photoDataUrl || '',
-            ts: Date.now()
-        };
-        const posts = readPosts();
-        posts.push(post);
-        writePosts(posts);
-        // Reset and re-render
-        commentForm.reset();
-        commentCountrySelect.value = countrySelect.value;
-        renderPosts();
-    };
-
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = () => savePost(reader.result);
-        reader.onerror = () => alert('Could not read the selected image.');
-        reader.readAsDataURL(file);
-    } else {
-        savePost('');
-    }
-}
-const createCard = (imgSrc) => {
+        function handleCommentSubmit(e) {
+            e.preventDefault();
+            const name = commentName.value.trim();
+            const country = commentCountrySelect.value;
+            const text = commentText.value.trim();
+            const file = commentPhoto.files[0];
+            if (!text) {
+                alert('Please enter a comment before submitting.');
+                return;
+            }
+            const createCard = (imgSrc) => {
                 const card = document.createElement('div');
                 card.className = 'p-4 bg-white rounded-lg shadow-xl border border-gray-200 transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl';
                 let html = '';
@@ -4897,17 +4743,6 @@ const createCard = (imgSrc) => {
             if (essentialPhraseCategorySelect) {
                 essentialPhraseCategorySelect.addEventListener('change', () => {
                     renderEssentialPhrasesForCategory();
-            const phrasesNoteEl = document.getElementById('phrases-note');
-            if (phrasesNoteEl) {
-                if (countryName === 'Thailand') {
-                    phrasesNoteEl.textContent = 'Generally, females use "ka" and males use "krap" after some statements or questions to be more polite.';
-                    phrasesNoteEl.classList.remove('hidden');
-                } else {
-                    phrasesNoteEl.textContent = '';
-                    phrasesNoteEl.classList.add('hidden');
-                }
-            }
-
                 });
             }
 
@@ -4961,6 +4796,175 @@ const createCard = (imgSrc) => {
     </form>
   </div>
 </div>
+
+
+<script>
+/* ===== Add-on JS: Thailand note + Join/Profile gating (non-destructive) ===== */
+
+(function () {
+  // --- Safe helpers ---
+  function qs(id){ return document.getElementById(id); }
+  function getProfile(){
+    try { return JSON.parse(localStorage.getItem('userProfile') || 'null'); } catch { return null; }
+  }
+  function setProfile(p){ localStorage.setItem('userProfile', JSON.stringify(p)); }
+
+  /* ---------- 1) Thailand politeness note (append-only, no overrides) ---------- */
+  function applyThaiNote() {
+    var countrySel = qs('country-select');
+    var list = qs('essential-phrases-list');
+    if (!countrySel || !list) return;
+    // Remove existing note if present
+    var old = qs('th-polite-note');
+    if (old) old.remove();
+    if (countrySel.value === 'Thailand') {
+      var li = document.createElement('li');
+      li.id = 'th-polite-note';
+      li.className = 'text-xs text-gray-600 italic mt-1';
+      li.textContent = 'Generally, females use "ka" and males use "krap" after some statements or questions to be more polite.';
+      list.appendChild(li);
+    }
+  }
+  document.addEventListener('change', function(e){
+    if (e.target && (e.target.id === 'country-select' || e.target.id === 'essential-phrase-category-select')) {
+      setTimeout(applyThaiNote, 0);
+    }
+  });
+  if (window.MutationObserver && qs('essential-phrases-list')) {
+    new MutationObserver(function(){ setTimeout(applyThaiNote, 0); })
+      .observe(qs('essential-phrases-list'), { childList: true });
+  }
+  window.addEventListener('DOMContentLoaded', function(){ setTimeout(applyThaiNote, 0); });
+
+  /* ---------- 2) Join/Profile gating and per-author delete (local only) ---------- */
+  var joinBtn = qs('join-btn');
+  var overlay = qs('join-overlay');
+  var joinForm = qs('join-form');
+  var cancelJoin = qs('join-cancel');
+  var profileArea = qs('profile-area');
+  var uName = qs('profile-username');
+  var uFrom = qs('profile-from');
+  var uGreeting = qs('profile-greeting');
+  var logoutBtn = qs('logout-btn');
+
+  var commentForm = qs('comment-form');
+  var commentName = qs('comment-name');
+  var commentsDisplay = qs('comments-display');
+
+  function openOverlay(){ overlay && overlay.classList.remove('hidden'); }
+  function closeOverlay(){ overlay && overlay.classList.add('hidden'); }
+
+  function enableForm(enabled){
+    if (!commentForm) return;
+    var inputs = Array.prototype.slice.call(commentForm.querySelectorAll('input, textarea, select, button[type="submit"]'));
+    inputs.forEach(function(el){
+      if (el.id === 'comment-country') return; // keep country open
+      if (el.type !== 'hidden') el.disabled = !enabled;
+    });
+    var submitBtn = commentForm.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.textContent = enabled ? 'Add Comment' : 'Join to Post';
+  }
+
+  function applyProfileUI(){
+    var p = getProfile();
+    if (p) {
+      if (profileArea) profileArea.classList.remove('hidden');
+      if (uName) uName.textContent = p.username || '';
+      if (uFrom) uFrom.textContent = p.from || '';
+      if (uGreeting) uGreeting.textContent = p.greeting || '';
+      if (commentName) { commentName.value = p.username || ''; commentName.readOnly = true; }
+      enableForm(true);
+      attachDeleteButtons();
+    } else {
+      if (profileArea) profileArea.classList.add('hidden');
+      if (commentName) { commentName.readOnly = false; commentName.value=''; }
+      enableForm(false);
+      attachDeleteButtons(); // re-run to hide deletes if any
+    }
+  }
+
+  function attachDeleteButtons(){
+    var p = getProfile();
+    if (!commentsDisplay) return;
+    Array.prototype.forEach.call(commentsDisplay.children, function(card){
+      try {
+        // Find the <h4> author element inside the card
+        var h4 = card.querySelector('h4');
+        if (!h4) return;
+        var author = (h4.textContent || '').trim();
+        // Clear any existing control first
+        var del = card.querySelector('[data-del]');
+        if (del) del.parentNode.removeChild(del);
+        // Only add if current user matches author
+        if (p && p.username && author === p.username) {
+          var bar = card.querySelector('.text-sm.text-gray-600') || card; // best-effort place
+          var btn = document.createElement('button');
+          btn.textContent = 'Delete';
+          btn.setAttribute('data-del', '1');
+          btn.className = 'text-red-600 hover:underline ml-2';
+          // Create a right-justified container if needed
+          var wrap = document.createElement('div');
+          wrap.className = 'flex justify-end mt-2';
+          wrap.appendChild(btn);
+          card.appendChild(wrap);
+        }
+      } catch (_) {}
+    });
+  }
+
+  // Delete handler via delegation
+  commentsDisplay && commentsDisplay.addEventListener('click', function(e){
+    var btn = e.target.closest('[data-del]');
+    if (!btn) return;
+    var card = btn.closest('div');
+    if (!card) return;
+    if (confirm('Delete this post?')) {
+      card.remove();
+    }
+  });
+
+  // Open/close overlay
+  joinBtn && joinBtn.addEventListener('click', openOverlay);
+  cancelJoin && cancelJoin.addEventListener('click', closeOverlay);
+
+  // Save profile
+  joinForm && joinForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    var username = (qs('join-username').value || '').trim();
+    var from = (qs('join-from').value || '').trim();
+    var greeting = (qs('join-greeting').value || '').trim();
+    if (!username) { alert('Please enter a username.'); return; }
+    setProfile({ username: username, from: from, greeting: greeting });
+    closeOverlay();
+    applyProfileUI();
+  });
+
+  // Log out
+  logoutBtn && logoutBtn.addEventListener('click', function(){
+    localStorage.removeItem('userProfile');
+    applyProfileUI();
+  });
+
+  // GATE the submit with CAPTURE so it runs before the original handler
+  if (commentForm) {
+    commentForm.addEventListener('submit', function(e){
+      var p = getProfile();
+      if (!p) {
+        e.stopImmediatePropagation();
+        e.preventDefault();
+        openOverlay();
+      }
+    }, true); // capture phase
+  }
+
+  // Watch for new cards (when original script adds them) and attach delete buttons
+  if (window.MutationObserver && commentsDisplay) {
+    new MutationObserver(function(){ attachDeleteButtons(); }).observe(commentsDisplay, { childList: true, subtree: false });
+  }
+
+  window.addEventListener('DOMContentLoaded', applyProfileUI);
+})();
+</script>
 
 </body></html>`;
                     const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
@@ -5024,6 +5028,175 @@ const createCard = (imgSrc) => {
     </form>
   </div>
 </div>
+
+
+<script>
+/* ===== Add-on JS: Thailand note + Join/Profile gating (non-destructive) ===== */
+
+(function () {
+  // --- Safe helpers ---
+  function qs(id){ return document.getElementById(id); }
+  function getProfile(){
+    try { return JSON.parse(localStorage.getItem('userProfile') || 'null'); } catch { return null; }
+  }
+  function setProfile(p){ localStorage.setItem('userProfile', JSON.stringify(p)); }
+
+  /* ---------- 1) Thailand politeness note (append-only, no overrides) ---------- */
+  function applyThaiNote() {
+    var countrySel = qs('country-select');
+    var list = qs('essential-phrases-list');
+    if (!countrySel || !list) return;
+    // Remove existing note if present
+    var old = qs('th-polite-note');
+    if (old) old.remove();
+    if (countrySel.value === 'Thailand') {
+      var li = document.createElement('li');
+      li.id = 'th-polite-note';
+      li.className = 'text-xs text-gray-600 italic mt-1';
+      li.textContent = 'Generally, females use "ka" and males use "krap" after some statements or questions to be more polite.';
+      list.appendChild(li);
+    }
+  }
+  document.addEventListener('change', function(e){
+    if (e.target && (e.target.id === 'country-select' || e.target.id === 'essential-phrase-category-select')) {
+      setTimeout(applyThaiNote, 0);
+    }
+  });
+  if (window.MutationObserver && qs('essential-phrases-list')) {
+    new MutationObserver(function(){ setTimeout(applyThaiNote, 0); })
+      .observe(qs('essential-phrases-list'), { childList: true });
+  }
+  window.addEventListener('DOMContentLoaded', function(){ setTimeout(applyThaiNote, 0); });
+
+  /* ---------- 2) Join/Profile gating and per-author delete (local only) ---------- */
+  var joinBtn = qs('join-btn');
+  var overlay = qs('join-overlay');
+  var joinForm = qs('join-form');
+  var cancelJoin = qs('join-cancel');
+  var profileArea = qs('profile-area');
+  var uName = qs('profile-username');
+  var uFrom = qs('profile-from');
+  var uGreeting = qs('profile-greeting');
+  var logoutBtn = qs('logout-btn');
+
+  var commentForm = qs('comment-form');
+  var commentName = qs('comment-name');
+  var commentsDisplay = qs('comments-display');
+
+  function openOverlay(){ overlay && overlay.classList.remove('hidden'); }
+  function closeOverlay(){ overlay && overlay.classList.add('hidden'); }
+
+  function enableForm(enabled){
+    if (!commentForm) return;
+    var inputs = Array.prototype.slice.call(commentForm.querySelectorAll('input, textarea, select, button[type="submit"]'));
+    inputs.forEach(function(el){
+      if (el.id === 'comment-country') return; // keep country open
+      if (el.type !== 'hidden') el.disabled = !enabled;
+    });
+    var submitBtn = commentForm.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.textContent = enabled ? 'Add Comment' : 'Join to Post';
+  }
+
+  function applyProfileUI(){
+    var p = getProfile();
+    if (p) {
+      if (profileArea) profileArea.classList.remove('hidden');
+      if (uName) uName.textContent = p.username || '';
+      if (uFrom) uFrom.textContent = p.from || '';
+      if (uGreeting) uGreeting.textContent = p.greeting || '';
+      if (commentName) { commentName.value = p.username || ''; commentName.readOnly = true; }
+      enableForm(true);
+      attachDeleteButtons();
+    } else {
+      if (profileArea) profileArea.classList.add('hidden');
+      if (commentName) { commentName.readOnly = false; commentName.value=''; }
+      enableForm(false);
+      attachDeleteButtons(); // re-run to hide deletes if any
+    }
+  }
+
+  function attachDeleteButtons(){
+    var p = getProfile();
+    if (!commentsDisplay) return;
+    Array.prototype.forEach.call(commentsDisplay.children, function(card){
+      try {
+        // Find the <h4> author element inside the card
+        var h4 = card.querySelector('h4');
+        if (!h4) return;
+        var author = (h4.textContent || '').trim();
+        // Clear any existing control first
+        var del = card.querySelector('[data-del]');
+        if (del) del.parentNode.removeChild(del);
+        // Only add if current user matches author
+        if (p && p.username && author === p.username) {
+          var bar = card.querySelector('.text-sm.text-gray-600') || card; // best-effort place
+          var btn = document.createElement('button');
+          btn.textContent = 'Delete';
+          btn.setAttribute('data-del', '1');
+          btn.className = 'text-red-600 hover:underline ml-2';
+          // Create a right-justified container if needed
+          var wrap = document.createElement('div');
+          wrap.className = 'flex justify-end mt-2';
+          wrap.appendChild(btn);
+          card.appendChild(wrap);
+        }
+      } catch (_) {}
+    });
+  }
+
+  // Delete handler via delegation
+  commentsDisplay && commentsDisplay.addEventListener('click', function(e){
+    var btn = e.target.closest('[data-del]');
+    if (!btn) return;
+    var card = btn.closest('div');
+    if (!card) return;
+    if (confirm('Delete this post?')) {
+      card.remove();
+    }
+  });
+
+  // Open/close overlay
+  joinBtn && joinBtn.addEventListener('click', openOverlay);
+  cancelJoin && cancelJoin.addEventListener('click', closeOverlay);
+
+  // Save profile
+  joinForm && joinForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    var username = (qs('join-username').value || '').trim();
+    var from = (qs('join-from').value || '').trim();
+    var greeting = (qs('join-greeting').value || '').trim();
+    if (!username) { alert('Please enter a username.'); return; }
+    setProfile({ username: username, from: from, greeting: greeting });
+    closeOverlay();
+    applyProfileUI();
+  });
+
+  // Log out
+  logoutBtn && logoutBtn.addEventListener('click', function(){
+    localStorage.removeItem('userProfile');
+    applyProfileUI();
+  });
+
+  // GATE the submit with CAPTURE so it runs before the original handler
+  if (commentForm) {
+    commentForm.addEventListener('submit', function(e){
+      var p = getProfile();
+      if (!p) {
+        e.stopImmediatePropagation();
+        e.preventDefault();
+        openOverlay();
+      }
+    }, true); // capture phase
+  }
+
+  // Watch for new cards (when original script adds them) and attach delete buttons
+  if (window.MutationObserver && commentsDisplay) {
+    new MutationObserver(function(){ attachDeleteButtons(); }).observe(commentsDisplay, { childList: true, subtree: false });
+  }
+
+  window.addEventListener('DOMContentLoaded', applyProfileUI);
+})();
+</script>
 
 </body>
 </html>
