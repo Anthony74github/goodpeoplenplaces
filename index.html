@@ -30,8 +30,6 @@
     <title>Good People n Places</title>
     <!-- Include Tailwind CSS via CDN for rapid styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Supabase JS SDK -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -251,6 +249,7 @@
                                 <option value="directions">Directions</option>
                             </select>
                             <ul id="essential-phrases-list" class="list-disc list-inside space-y-1 text-gray-700"></ul>
+<p id="phrases-note" class="text-xs text-gray-600 mt-2 hidden"></p>
                         </div>
                     </div>
                 </div>
@@ -340,7 +339,7 @@
                     </div>
                     <!-- IP Address Checker Tool -->
                     <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl border border-gray-200 transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl text-center">
-                        <h3 class="text-2xl font-semibold mb-4 text-blue-600">Check My IP Address</h3>
+                        <h3 class="text-2xl font-semibold mb-4 text-blue-600">Your Public IP Address</h3>
                         <button id="get-ip-btn" class="button-gradient text-white py-2 px-6 rounded-md shadow-md hover:scale-105 transition duration-300 mb-4">Get My IP</button>
                         <p id="ip-address-display" class="text-lg font-medium text-gray-800">Your IP address will appear here.</p>
                     </div>
@@ -448,6 +447,16 @@
         <div class="container mx-auto max-w-6xl">
             <!-- Added handshake emoji to foster a sense of connection and sharing -->
             <h2 class="text-3xl md:text-4xl font-bold mb-8 text-center text-gray-900">Share Your Trip 🤝</h2>
+<div class="flex justify-center mt-4">
+  <button id="join-btn" class="button-gradient text-white py-2 px-6 rounded-md shadow-md hover:scale-105 transition duration-300">Join</button>
+</div>
+<div id="profile-area" class="text-center text-sm text-gray-700 mt-3 hidden">
+  Logged in as <span id="profile-username" class="font-semibold"></span>
+  <span class="mx-1">•</span> From <span id="profile-from"></span>
+  <span class="mx-1">—</span> <span id="profile-greeting" class="italic"></span>
+  <button id="logout-btn" class="ml-2 text-blue-600 font-semibold hover:underline">Log out</button>
+</div>
+
             <p class="text-lg md:text-xl text-gray-700 mb-8 text-center">Upload a photo and tell us about your past or planned travels!</p>
             <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl border border-gray-200 transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl mb-10">
                 <form id="comment-form" class="space-y-4">
@@ -510,10 +519,6 @@
 
     <!-- JavaScript for dynamic behaviour -->
     <script>
-      const SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRtY3hidGRqamd3Zm9xZGZqdXBuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0OTcyMzEsImV4cCI6MjA3MjA3MzIzMX0.h_qa51FcNT6P62AQoJjjoef7Qv2QD3h3LYBJWua0-Po';
-const SUPABASE_BUCKET = 'trip-photos';
-const API_BASE = ''; // same-origin API on Vercel
         // Country data: a small sample of destinations with history, attractions, foods and practical information.
         const countriesData = {
             'Australia': {
@@ -3711,6 +3716,110 @@ const API_BASE = ''; // same-origin API on Vercel
         const commentPhoto = document.getElementById('comment-photo');
         const commentText = document.getElementById('comment-text');
         const commentsDisplay = document.getElementById('comments-display');
+
+// --- Join + Profile gating & Local Posts ---
+function getProfile() {
+    try { return JSON.parse(localStorage.getItem('userProfile') || 'null'); } catch { return null; }
+}
+function setProfile(p) {
+    localStorage.setItem('userProfile', JSON.stringify(p));
+}
+function readPosts() {
+    try { return JSON.parse(localStorage.getItem('tripPosts') || '[]'); } catch { return []; }
+}
+function writePosts(items) {
+    localStorage.setItem('tripPosts', JSON.stringify(items));
+}
+function enableCommentForm(enabled) {
+    const inputs = Array.from(commentForm.querySelectorAll('input, textarea, select, button[type="submit"]'));
+    inputs.forEach(el => {
+        if (el.id === 'comment-country') return;
+        el.disabled = !enabled && el.type !== 'hidden';
+    });
+    const submitBtn = commentForm.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.textContent = enabled ? 'Add Comment' : 'Join to Post';
+}
+function applyProfileUI() {
+    const profile = getProfile();
+    const profileArea = document.getElementById('profile-area');
+    const uName = document.getElementById('profile-username');
+    const uFrom = document.getElementById('profile-from');
+    const uGreeting = document.getElementById('profile-greeting');
+    if (profile) {
+        profileArea?.classList.remove('hidden');
+        if (uName) uName.textContent = profile.username || '';
+        if (uFrom) uFrom.textContent = profile.from || '';
+        if (uGreeting) uGreeting.textContent = profile.greeting || '';
+        enableCommentForm(true);
+        if (commentName) { commentName.value = profile.username || ''; }
+    } else {
+        profileArea?.classList.add('hidden');
+        enableCommentForm(false);
+        if (commentName) { commentName.value = ''; }
+    }
+}
+function renderPosts() {
+    const posts = readPosts().sort((a,b)=>b.ts-a.ts);
+    const me = getProfile();
+    commentsDisplay.innerHTML = posts.map(post => {
+        const canDelete = !!(me && me.username === (post.by?.username));
+        return (
+`<div class="p-4 bg-white rounded-lg shadow-xl border border-gray-200 transform transition duration-300 hover:-translate-y-1 hover:shadow-2xl">
+  ${post.photoDataUrl ? `<img src="${post.photoDataUrl}" alt="Trip photo" class="w-full h-64 object-cover rounded-md mb-3">` : ''}
+  <p class="text-gray-800 whitespace-pre-wrap mb-2">${post.text || ''}</p>
+  <div class="text-sm text-gray-600 flex justify-between items-center">
+    <span>By <span class="font-semibold">${post.name || (post.by?.username) || 'Anonymous'}</span> • ${post.country || ''}</span>
+    ${canDelete ? `<button data-delete="${post.id}" class="text-red-600 hover:underline">Delete</button>` : ''}
+  </div>
+</div>`
+        );
+    }).join('');
+}
+// Event delegation for delete
+commentsDisplay?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-delete]');
+    if (!btn) return;
+    const id = btn.getAttribute('data-delete');
+    if (confirm('Delete this post?')) {
+        const posts = readPosts().filter(p => String(p.id) !== String(id));
+        writePosts(posts);
+        renderPosts();
+    }
+});
+
+// Join modal logic
+(function initJoin() {
+    const joinBtn = document.getElementById('join-btn');
+    const overlay = document.getElementById('join-overlay');
+    const joinForm = document.getElementById('join-form');
+    const cancelBtn = document.getElementById('join-cancel');
+    const logoutBtn = document.getElementById('logout-btn');
+
+    function openOverlay(){ overlay?.classList.remove('hidden'); }
+    function closeOverlay(){ overlay?.classList.add('hidden'); }
+
+    joinBtn?.addEventListener('click', openOverlay);
+    cancelBtn?.addEventListener('click', closeOverlay);
+    logoutBtn?.addEventListener('click', () => { localStorage.removeItem('userProfile'); applyProfileUI(); renderPosts(); });
+
+    joinForm?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const username = (document.getElementById('join-username')?.value || '').trim();
+        const from = (document.getElementById('join-from')?.value || '').trim();
+        const greeting = (document.getElementById('join-greeting')?.value || '').trim();
+        if (!username) { alert('Please enter a username.'); return; }
+        setProfile({ username, from, greeting });
+        closeOverlay();
+        applyProfileUI();
+    });
+})();
+
+// Initialize on load
+window.addEventListener('DOMContentLoaded', () => {
+    applyProfileUI();
+    renderPosts();
+});
+
         const scrollBtn = document.getElementById('scrollToTopBtn');
 
         // Elements for newly added informational sections
@@ -4053,6 +4162,17 @@ const API_BASE = ''; // same-origin API on Vercel
                 categorySelect.value = 'greetings';
             }
             renderEssentialPhrasesForCategory();
+            const phrasesNoteEl = document.getElementById('phrases-note');
+            if (phrasesNoteEl) {
+                if (countryName === 'Thailand') {
+                    phrasesNoteEl.textContent = 'Generally, females use "ka" and males use "krap" after some statements or questions to be more polite.';
+                    phrasesNoteEl.classList.remove('hidden');
+                } else {
+                    phrasesNoteEl.textContent = '';
+                    phrasesNoteEl.classList.add('hidden');
+                }
+            }
+
             // Emergency contacts (display numbers in red) and U.S. Embassy info in purple
             emergencyList.innerHTML = '';
             data.emergencyContacts.forEach(contact => {
@@ -4558,6 +4678,19 @@ function renderEssentialPhrasesForCategory() {
         li.innerHTML = `<span class="font-medium">${eng}:</span> ${cleanTrans}`;
         listEl.appendChild(li);
     });
+
+    // Ensure Thailand politeness note visibility stays in sync with category changes
+    const noteEl = document.getElementById('phrases-note');
+    const countrySel = document.getElementById('country-select');
+    if (noteEl && countrySel) {
+        if (countrySel.value === 'Thailand') {
+            noteEl.textContent = 'Generally, females use "ka" and males use "krap" after some statements or questions to be more polite.';
+            noteEl.classList.remove('hidden');
+        } else {
+            noteEl.textContent = '';
+            noteEl.classList.add('hidden');
+        }
+    }
 }
 
         /**
@@ -4568,7 +4701,7 @@ function renderEssentialPhrasesForCategory() {
             try {
                 const res = await fetch('https://api.ipify.org?format=json');
                 const data = await res.json();
-                ipAddressDisplay.textContent = `Your IP address: ${data.ip}`;
+                ipAddressDisplay.textContent = `Your public IP address: ${data.ip}`;
             } catch (err) {
                 ipAddressDisplay.textContent = 'Unable to fetch IP.';
             }
@@ -4580,17 +4713,48 @@ function renderEssentialPhrasesForCategory() {
          * display.  The form is then reset.  No data is sent anywhere.
          * @param {Event} e The form submit event
          */
-        function handleCommentSubmit(e) {
-            e.preventDefault();
-            const name = commentName.value.trim();
-            const country = commentCountrySelect.value;
-            const text = commentText.value.trim();
-            const file = commentPhoto.files[0];
-            if (!text) {
-                alert('Please enter a comment before submitting.');
-                return;
-            }
-            const createCard = (imgSrc) => {
+        
+function handleCommentSubmit(e) {
+    e.preventDefault();
+    const me = getProfile();
+    if (!me) { alert('Please Join first.'); return; }
+    const name = commentName.value.trim() || me.username;
+    const country = commentCountrySelect.value;
+    const text = commentText.value.trim();
+    const file = commentPhoto.files[0];
+
+    // Require exactly one comment and allow at most one photo. (Form provides one file input, so at most one photo.)
+    if (!text) { alert('Please add a comment.'); return; }
+    // photo is optional, but if provided must be an image
+    if (file && !file.type.startsWith('image/')) { alert('Please upload an image file.'); return; }
+
+    const savePost = (photoDataUrl) => {
+        const post = {
+            id: Date.now(),
+            by: { username: me.username },
+            name, country, text,
+            photoDataUrl: photoDataUrl || '',
+            ts: Date.now()
+        };
+        const posts = readPosts();
+        posts.push(post);
+        writePosts(posts);
+        // Reset and re-render
+        commentForm.reset();
+        commentCountrySelect.value = countrySelect.value;
+        renderPosts();
+    };
+
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = () => savePost(reader.result);
+        reader.onerror = () => alert('Could not read the selected image.');
+        reader.readAsDataURL(file);
+    } else {
+        savePost('');
+    }
+}
+const createCard = (imgSrc) => {
                 const card = document.createElement('div');
                 card.className = 'p-4 bg-white rounded-lg shadow-xl border border-gray-200 transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl';
                 let html = '';
@@ -4733,6 +4897,17 @@ function renderEssentialPhrasesForCategory() {
             if (essentialPhraseCategorySelect) {
                 essentialPhraseCategorySelect.addEventListener('change', () => {
                     renderEssentialPhrasesForCategory();
+            const phrasesNoteEl = document.getElementById('phrases-note');
+            if (phrasesNoteEl) {
+                if (countryName === 'Thailand') {
+                    phrasesNoteEl.textContent = 'Generally, females use "ka" and males use "krap" after some statements or questions to be more polite.';
+                    phrasesNoteEl.classList.remove('hidden');
+                } else {
+                    phrasesNoteEl.textContent = '';
+                    phrasesNoteEl.classList.add('hidden');
+                }
+            }
+
                 });
             }
 
@@ -4761,7 +4936,33 @@ function renderEssentialPhrasesForCategory() {
                     // Insert a line break after each label to ensure items appear on separate lines in the downloaded file
                     let content = packingListEditable.innerHTML;
                     content = content.replace(/<\/label>/g, '</label><br>');
-                    const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Packing List</title></head><body>${content}</body></html>`;
+                    const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Packing List</title></head><body>${content}
+<!-- Join/Profile Overlay -->
+<div id="join-overlay" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50 hidden">
+  <div class="bg-white p-6 md:p-8 rounded-lg shadow-lg w-11/12 md:w-1/2 lg:w-1/3">
+    <h3 class="text-xl font-semibold mb-4 text-blue-600 text-center">Create Your Profile</h3>
+    <form id="join-form" class="space-y-3">
+      <div>
+        <label class="block text-sm font-semibold mb-1" for="join-username">Username</label>
+        <input id="join-username" class="w-full p-3 border border-gray-300 rounded-md" maxlength="30" placeholder="e.g., SunnyTraveler" required>
+      </div>
+      <div>
+        <label class="block text-sm font-semibold mb-1" for="join-from">From</label>
+        <input id="join-from" class="w-full p-3 border border-gray-300 rounded-md" maxlength="40" placeholder="e.g., NYC, USA">
+      </div>
+      <div>
+        <label class="block text-sm font-semibold mb-1" for="join-greeting">Greeting</label>
+        <input id="join-greeting" class="w-full p-3 border border-gray-300 rounded-md" maxlength="60" placeholder="e.g., Happy to meet you all!">
+      </div>
+      <div class="flex justify-end space-x-3 pt-2">
+        <button type="button" id="join-cancel" class="text-blue-600 font-semibold hover:underline">Cancel</button>
+        <button type="submit" class="button-gradient text-white py-2 px-6 rounded-md shadow-md">Save & Continue</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+</body></html>`;
                     const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
                     const url = URL.createObjectURL(blob);
                     const link = document.createElement('a');
@@ -4798,5 +4999,31 @@ function renderEssentialPhrasesForCategory() {
             }
         });
     </script>
+
+<!-- Join/Profile Overlay -->
+<div id="join-overlay" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50 hidden">
+  <div class="bg-white p-6 md:p-8 rounded-lg shadow-lg w-11/12 md:w-1/2 lg:w-1/3">
+    <h3 class="text-xl font-semibold mb-4 text-blue-600 text-center">Create Your Profile</h3>
+    <form id="join-form" class="space-y-3">
+      <div>
+        <label class="block text-sm font-semibold mb-1" for="join-username">Username</label>
+        <input id="join-username" class="w-full p-3 border border-gray-300 rounded-md" maxlength="30" placeholder="e.g., SunnyTraveler" required>
+      </div>
+      <div>
+        <label class="block text-sm font-semibold mb-1" for="join-from">From</label>
+        <input id="join-from" class="w-full p-3 border border-gray-300 rounded-md" maxlength="40" placeholder="e.g., NYC, USA">
+      </div>
+      <div>
+        <label class="block text-sm font-semibold mb-1" for="join-greeting">Greeting</label>
+        <input id="join-greeting" class="w-full p-3 border border-gray-300 rounded-md" maxlength="60" placeholder="e.g., Happy to meet you all!">
+      </div>
+      <div class="flex justify-end space-x-3 pt-2">
+        <button type="button" id="join-cancel" class="text-blue-600 font-semibold hover:underline">Cancel</button>
+        <button type="submit" class="button-gradient text-white py-2 px-6 rounded-md shadow-md">Save & Continue</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 </body>
 </html>
