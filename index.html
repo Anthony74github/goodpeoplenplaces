@@ -30,6 +30,8 @@
     <title>Good People n Places</title>
     <!-- Include Tailwind CSS via CDN for rapid styling -->
     <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Supabase JS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -509,7 +511,7 @@
     <!-- JavaScript for dynamic behaviour -->
     <script>
       const SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co';
-const SUPABASE_ANON_KEY = 'YOUR_PUBLIC_ANON_KEY';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRtY3hidGRqamd3Zm9xZGZqdXBuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0OTcyMzEsImV4cCI6MjA3MjA3MzIzMX0.h_qa51FcNT6P62AQoJjjoef7Qv2QD3h3LYBJWua0-Po';
 const SUPABASE_BUCKET = 'trip-photos';
 const API_BASE = ''; // same-origin API on Vercel
         // Country data: a small sample of destinations with history, attractions, foods and practical information.
