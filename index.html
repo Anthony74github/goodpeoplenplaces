@@ -91,11 +91,6 @@
             background-position: center;
         }
     </style>
-
-    <!-- Leaflet (for English-labeled basemap) -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-
 </head>
 <body class="bg-gray-50 text-gray-800">
     <!-- Hero Section with image set via CSS background -->
@@ -198,7 +193,7 @@
                         <!-- Map container now appears on the right side on larger screens. -->
                         <div id="map-container" class="relative w-full md:w-1/2 h-48 md:h-60 bg-blue-50 rounded-lg overflow-hidden order-1 md:order-2">
                             <!-- Replace the static map and marker with an interactive OpenStreetMap embed.  The iframe will be updated via JavaScript when a country is selected. -->
-                            <div id="osm-map" class="absolute inset-0 w-full h-full"></div>
+                            <iframe id="osm-map" class="absolute inset-0 w-full h-full" frameborder="0" scrolling="no" src="" style="border:0;"></iframe>
                         </div>
                     </div>
                 </div>
@@ -254,7 +249,6 @@
                                 <option value="directions">Directions</option>
                             </select>
                             <ul id="essential-phrases-list" class="list-disc list-inside space-y-1 text-gray-700"></ul>
-<p id="phrases-note" class="text-xs text-gray-600 mt-2 hidden"></p>
                         </div>
                     </div>
                 </div>
@@ -344,9 +338,9 @@
                     </div>
                     <!-- IP Address Checker Tool -->
                     <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl border border-gray-200 transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl text-center">
-                        <h3 class="text-2xl font-semibold mb-4 text-blue-600">Your Public IP Address</h3>
+                        <h3 class="text-2xl font-semibold mb-4 text-blue-600">Check My IP Address</h3>
                         <button id="get-ip-btn" class="button-gradient text-white py-2 px-6 rounded-md shadow-md hover:scale-105 transition duration-300 mb-4">Get My IP</button>
-                        <p id="ip-address-display" class="text-lg font-medium text-gray-800">Your public IP address will appear here.</p>
+                        <p id="ip-address-display" class="text-lg font-medium text-gray-800">Your IP address will appear here.</p>
                     </div>
                 </div>
             </div>
@@ -4002,35 +3996,18 @@
                 // Update the embedded OpenStreetMap iframe.  A bounding box centred on the country
                 // coordinates provides an appropriate zoom level.  The marker parameter pins the
                 // selected destination on the map.  If the iframe element exists, set its src.
-                
-                // Initialize or update a Leaflet map using an English-labeled basemap.
-                // We use Carto's "light_all" tiles which label places in English.
-                if (!window._leafletMap) {
-                    const el = document.getElementById('osm-map');
-                    if (el) {
-                        window._leafletMap = L.map(el, { zoomControl: true });
-                        window._leafletTileLayer = L.tileLayer(
-                            'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-                            {
-                                attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
-                            }
-                        ).addTo(window._leafletMap);
-                        window._leafletMarker = L.marker([0,0]).addTo(window._leafletMap);
-                    }
-                }
-                if (window._leafletMap) {
+                const mapIframe = document.getElementById('osm-map');
+                if (mapIframe) {
                     const lat  = geo.lat;
                     const lon  = geo.lon;
-                    // Fit to a loose bounding box around the destination for a similar zoom effect
-                    const latDiff = 5, lonDiff = 5;
-                    const bounds = L.latLngBounds(
-                        [lat - latDiff, lon - lonDiff],
-                        [lat + latDiff, lon + lonDiff]
-                    );
-                    window._leafletMap.fitBounds(bounds);
-                    window._leafletMarker.setLatLng([lat, lon]);
+                    const latDiff = 5;
+                    const lonDiff = 5;
+                    const bbox = [
+                        lon - lonDiff, lat - latDiff,
+                        lon + lonDiff, lat + latDiff
+                    ].join(',');
+                    mapIframe.src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lon}`;
                 }
-
                 // Build the location and climate description inside the shaded box.  Headings remain
                 // centred with extra spacing below, while the text paragraphs are left‑aligned for
                 // readability.
@@ -4070,17 +4047,6 @@
                 categorySelect.value = 'greetings';
             }
             renderEssentialPhrasesForCategory();
-            const phrasesNoteEl = document.getElementById('phrases-note');
-            if (phrasesNoteEl) {
-                if (countryName === 'Thailand') {
-                    phrasesNoteEl.textContent = 'Generally, females use "ka" and males use "krap" after some statements or questions to be more polite.';
-                    phrasesNoteEl.classList.remove('hidden');
-                } else {
-                    phrasesNoteEl.textContent = '';
-                    phrasesNoteEl.classList.add('hidden');
-                }
-            }
-
             // Emergency contacts (display numbers in red) and U.S. Embassy info in purple
             emergencyList.innerHTML = '';
             data.emergencyContacts.forEach(contact => {
@@ -4596,7 +4562,7 @@ function renderEssentialPhrasesForCategory() {
             try {
                 const res = await fetch('https://api.ipify.org?format=json');
                 const data = await res.json();
-                ipAddressDisplay.textContent = `Your public IP address: ${data.ip}`;
+                ipAddressDisplay.textContent = `Your IP address: ${data.ip}`;
             } catch (err) {
                 ipAddressDisplay.textContent = 'Unable to fetch IP.';
             }
@@ -4628,14 +4594,7 @@ function renderEssentialPhrasesForCategory() {
                 html += `<p class="text-sm text-gray-500 mb-1">${country}</p>`;
                 html += `<h4 class="font-semibold text-lg mb-1">${name || 'Anonymous'}</h4>`;
                 html += `<p class="text-gray-700">${text}</p>`;
-                html += `<div class=\"flex justify-end\"><button type=\"button\" class=\"delete-comment-btn text-red-600 text-sm underline mt-3\">Delete</button></div>`;
                 card.innerHTML = html;
-                const delBtn = card.querySelector('.delete-comment-btn');
-                if (delBtn) {
-                    delBtn.addEventListener('click', () => {
-                        if (confirm('Delete this post?')) { card.remove(); }
-                    });
-                }
                 commentsDisplay.prepend(card);
             };
             if (file) {
@@ -4768,17 +4727,6 @@ function renderEssentialPhrasesForCategory() {
             if (essentialPhraseCategorySelect) {
                 essentialPhraseCategorySelect.addEventListener('change', () => {
                     renderEssentialPhrasesForCategory();
-            const phrasesNoteEl = document.getElementById('phrases-note');
-            if (phrasesNoteEl) {
-                if (countryName === 'Thailand') {
-                    phrasesNoteEl.textContent = 'Generally, females use "ka" and males use "krap" after some statements or questions to be more polite.';
-                    phrasesNoteEl.classList.remove('hidden');
-                } else {
-                    phrasesNoteEl.textContent = '';
-                    phrasesNoteEl.classList.add('hidden');
-                }
-            }
-
                 });
             }
 
