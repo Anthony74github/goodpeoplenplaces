@@ -31,8 +31,6 @@
     <!-- Include Tailwind CSS via CDN for rapid styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      integrity="sha256-o9N1j7BYJXBqGSI6WsPytgkSH1gfK2Jzjtjt18PdIkA=" crossorigin="">
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -194,9 +192,9 @@
                         </div>
                         <!-- Map container now appears on the right side on larger screens. -->
                         <div id="map-container" class="relative w-full md:w-1/2 h-48 md:h-60 bg-blue-50 rounded-lg overflow-hidden order-1 md:order-2">
-                          <!-- Leaflet map will be rendered here -->
-                          <div id="leaflet-map" class="absolute inset-0 w-full h-full"></div>
-                          </div>
+                            <!-- Replace the static map and marker with an interactive OpenStreetMap embed.  The iframe will be updated via JavaScript when a country is selected. -->
+                            <iframe id="osm-map" class="absolute inset-0 w-full h-full" frameborder="0" scrolling="no" src="" style="border:0;"></iframe>
+                        </div>
                     </div>
                 </div>
                 <div id="foods-box">
@@ -510,9 +508,6 @@
 
     <!-- JavaScript for dynamic behaviour -->
     <script>
-      // Declare Leaflet map and marker variables
-    let leafletMap;
-    let leafletMarker;
         // Country data: a small sample of destinations with history, attractions, foods and practical information.
         const countriesData = {
             'Australia': {
@@ -3995,22 +3990,36 @@
                 localsTextEl.textContent = 'Ask locals about their favourite spots, hidden gems and cultural practices for an authentic experience.';
             }
 
-            // Position the map marker and update the location/climate description
+            // Position the map using OpenStreetMap and update the location/climate description
             const geo = countryGeo[countryName];
-if (geo && leafletMap && leafletMarker) {
-    leafletMap.setView([geo.lat, geo.lon], 4);
-    leafletMarker.setLatLng([geo.lat, geo.lon]);
-
-    // Update the location/climate description as before
-    if (locationDescriptionEl) {
-        locationDescriptionEl.innerHTML = `
-            <div class="font-bold text-center mb-4">Location</div>
-            <div class="text-left mb-6">${geo.locationDesc}</div>
-            <div class="font-bold text-center mb-4">Climate</div>
-            <div class="text-left">${geo.weatherDesc}</div>
-        `;
-    }
-}
+            if (geo) {
+                // Update the embedded OpenStreetMap iframe.  A bounding box centred on the country
+                // coordinates provides an appropriate zoom level.  The marker parameter pins the
+                // selected destination on the map.  If the iframe element exists, set its src.
+                const mapIframe = document.getElementById('osm-map');
+                if (mapIframe) {
+                    const lat  = geo.lat;
+                    const lon  = geo.lon;
+                    const latDiff = 5;
+                    const lonDiff = 5;
+                    const bbox = [
+                        lon - lonDiff, lat - latDiff,
+                        lon + lonDiff, lat + latDiff
+                    ].join(',');
+                    mapIframe.src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lon}`;
+                }
+                // Build the location and climate description inside the shaded box.  Headings remain
+                // centred with extra spacing below, while the text paragraphs are left‑aligned for
+                // readability.
+                if (locationDescriptionEl) {
+                    locationDescriptionEl.innerHTML = `
+                        <div class="font-bold text-center mb-4">Location</div>
+                        <div class="text-left mb-6">${geo.locationDesc}</div>
+                        <div class="font-bold text-center mb-4">Climate</div>
+                        <div class="text-left">${geo.weatherDesc}</div>
+                    `;
+                }
+            }
 
             // Safety tips
             safetyList.innerHTML = '';
@@ -4350,40 +4359,43 @@ if (geo && leafletMap && leafletMarker) {
          * @param {number} lat Latitude of the point (−90 to 90 degrees).
          * @param {number} lon Longitude of the point (−180 to 180 degrees).
          */
+        /*
+         * The original positionMapMarker function has been deprecated.  Marker positioning is
+         * now handled by the OpenStreetMap embed via an iframe, so this function is no longer
+         * used.  Keeping it commented here for reference.
+         */
+        /*
         function positionMapMarker(lat, lon) {
-    if (!mapContainer || !mapMarker) return;
-    const mapEl = document.getElementById('world-map');
-    const width  = mapContainer.offsetWidth;
-    const height = mapContainer.offsetHeight;
-    if (!width || !height || !mapEl) return;
+            if (!mapContainer || !mapMarker) return;
+            const mapEl = document.getElementById('world-map');
+            const width  = mapContainer.offsetWidth;
+            const height = mapContainer.offsetHeight;
+            if (!width || !height || !mapEl) return;
 
-    // Work out the natural aspect ratio of the image (width / height)
-    const imgAspect = mapEl.naturalWidth / mapEl.naturalHeight;
-    // Aspect ratio of the container
-    const containerAspect = width / height;
+            // Work out the natural aspect ratio of the image (width / height)
+            const imgAspect = mapEl.naturalWidth / mapEl.naturalHeight;
+            // Aspect ratio of the container
+            const containerAspect = width / height;
 
-    let x, y;
-    if (containerAspect > imgAspect) {
-        // Container is wider than the image’s aspect ratio.
-        // The image covers the full height and is centered horizontally.
-        const scaledHeight = height;
-        const scaledWidth  = scaledHeight * imgAspect;
-        const offsetX = (width - scaledWidth) / 2;
-        x = offsetX + ((lon + 180) / 360) * scaledWidth;
-        y = ((90 - lat) / 180) * scaledHeight;
-    } else {
-        // Container is taller than the image’s aspect ratio.
-        // The image covers the full width and is centered vertically.
-        const scaledWidth  = width;
-        const scaledHeight = scaledWidth / imgAspect;
-        const offsetY = (height - scaledHeight) / 2;
-        x = ((lon + 180) / 360) * scaledWidth;
-        y = offsetY + ((90 - lat) / 180) * scaledHeight;
-    }
+            let x, y;
+            if (containerAspect > imgAspect) {
+                const scaledHeight = height;
+                const scaledWidth  = scaledHeight * imgAspect;
+                const offsetX = (width - scaledWidth) / 2;
+                x = offsetX + ((lon + 180) / 360) * scaledWidth;
+                y = ((90 - lat) / 180) * scaledHeight;
+            } else {
+                const scaledWidth  = width;
+                const scaledHeight = scaledWidth / imgAspect;
+                const offsetY = (height - scaledHeight) / 2;
+                x = ((lon + 180) / 360) * scaledWidth;
+                y = offsetY + ((90 - lat) / 180) * scaledHeight;
+            }
 
-    mapMarker.style.left = `${x}px`;
-    mapMarker.style.top  = `${y}px`;
-}
+            mapMarker.style.left = `${x}px`;
+            mapMarker.style.top  = `${y}px`;
+        }
+        */
 
         // Attach click handlers to the holiday calendar navigation buttons
         if (prevMonthBtn && nextMonthBtn) {
@@ -4652,17 +4664,6 @@ function renderEssentialPhrasesForCategory() {
                 kg: 'lbs',
                 lbs: 'kg'
             };
-          // Initialise Leaflet map and marker here
-    leafletMap = L.map('leaflet-map', {
-        attributionControl: false,
-        zoomControl: false,
-    }).setView([0, 0], 2);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 8,
-    }).addTo(leafletMap);
-
-    leafletMarker = L.marker([0, 0]).addTo(leafletMap);
             function syncMeasurementPair(changedSelect) {
                 if (!changedSelect) return;
                 const pair = measurementPairsDOM[changedSelect.value];
@@ -4790,15 +4791,6 @@ function renderEssentialPhrasesForCategory() {
                 });
             }
         });
-      <script
-  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-  integrity="sha256-o+qQHFl0vW85pN6W8g+hcuA2aZc6Ovx5RAzzPc25uRk="
-  crossorigin=""
-></script>
-
-<!-- Your own JavaScript -->
-<script>
-  // …existing dynamic code here…
-</script>
+    </script>
 </body>
 </html>
