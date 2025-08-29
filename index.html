@@ -4557,7 +4557,18 @@ function renderEssentialPhrasesForCategory() {
         const cleanTrans = removeDiacritics(trans);
         li.innerHTML = `<span class="font-medium">${eng}:</span> ${cleanTrans}`;
         listEl.appendChild(li);
-    });
+    
+
+
+// Thailand-only politeness note (added by request)
+if (typeof selectedCountry !== 'undefined' && selectedCountry === 'Thailand') {
+    const noteLi = document.createElement('li');
+    noteLi.setAttribute('data-thai-note', '1');
+    noteLi.textContent = 'Note: Generally, females use "ka" and males use "krap" after some statements or questions to be more polite.';
+    listEl.appendChild(noteLi);
+}
+
+});
 }
 
         /**
