@@ -31,6 +31,8 @@
     <!-- Include Tailwind CSS via CDN for rapid styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-o9N1j7BYJXBqGSI6WsPytgkSH1gfK2Jzjtjt18PdIkA=" crossorigin="">
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -192,9 +194,9 @@
                         </div>
                         <!-- Map container now appears on the right side on larger screens. -->
                         <div id="map-container" class="relative w-full md:w-1/2 h-48 md:h-60 bg-blue-50 rounded-lg overflow-hidden order-1 md:order-2">
-                            <img id="world-map" src="./world-map.png" alt="World map" class="absolute inset-0 w-full h-full object-cover opacity-90" />
-                            <div id="map-marker" class="absolute"></div>
-                        </div>
+                          <!-- Leaflet map will be rendered here -->
+                          <div id="leaflet-map" class="absolute inset-0 w-full h-full"></div>
+                          </div>
                     </div>
                 </div>
                 <div id="foods-box">
@@ -508,6 +510,9 @@
 
     <!-- JavaScript for dynamic behaviour -->
     <script>
+      // Declare Leaflet map and marker variables
+    let leafletMap;
+    let leafletMarker;
         // Country data: a small sample of destinations with history, attractions, foods and practical information.
         const countriesData = {
             'Australia': {
@@ -3992,22 +3997,20 @@
 
             // Position the map marker and update the location/climate description
             const geo = countryGeo[countryName];
-            if (geo) {
-                // Use a short timeout to wait for the map container’s dimensions to settle after image load
-                setTimeout(() => {
-                    positionMapMarker(geo.lat, geo.lon);
-                }, 50);
-                if (locationDescriptionEl) {
-                    // Build the description inside the shaded box.  Headings remain centred with extra
-                    // spacing below, while the text paragraphs are left‑aligned for readability.
-                    locationDescriptionEl.innerHTML = `
-                        <div class="font-bold text-center mb-4">Location</div>
-                        <div class="text-left mb-6">${geo.locationDesc}</div>
-                        <div class="font-bold text-center mb-4">Climate</div>
-                        <div class="text-left">${geo.weatherDesc}</div>
-                    `;
-                }
-            }
+if (geo && leafletMap && leafletMarker) {
+    leafletMap.setView([geo.lat, geo.lon], 4);
+    leafletMarker.setLatLng([geo.lat, geo.lon]);
+
+    // Update the location/climate description as before
+    if (locationDescriptionEl) {
+        locationDescriptionEl.innerHTML = `
+            <div class="font-bold text-center mb-4">Location</div>
+            <div class="text-left mb-6">${geo.locationDesc}</div>
+            <div class="font-bold text-center mb-4">Climate</div>
+            <div class="text-left">${geo.weatherDesc}</div>
+        `;
+    }
+}
 
             // Safety tips
             safetyList.innerHTML = '';
@@ -4649,6 +4652,17 @@ function renderEssentialPhrasesForCategory() {
                 kg: 'lbs',
                 lbs: 'kg'
             };
+          // Initialise Leaflet map and marker here
+    leafletMap = L.map('leaflet-map', {
+        attributionControl: false,
+        zoomControl: false,
+    }).setView([0, 0], 2);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 8,
+    }).addTo(leafletMap);
+
+    leafletMarker = L.marker([0, 0]).addTo(leafletMap);
             function syncMeasurementPair(changedSelect) {
                 if (!changedSelect) return;
                 const pair = measurementPairsDOM[changedSelect.value];
@@ -4776,6 +4790,15 @@ function renderEssentialPhrasesForCategory() {
                 });
             }
         });
-    </script>
+      <script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-o+qQHFl0vW85pN6W8g+hcuA2aZc6Ovx5RAzzPc25uRk="
+  crossorigin=""
+></script>
+
+<!-- Your own JavaScript -->
+<script>
+  // …existing dynamic code here…
+</script>
 </body>
 </html>
