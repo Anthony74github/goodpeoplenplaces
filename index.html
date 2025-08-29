@@ -4772,7 +4772,45 @@ if (typeof selectedCountry !== 'undefined' && selectedCountry === 'Thailand') {
                     // Insert a line break after each label to ensure items appear on separate lines in the downloaded file
                     let content = packingListEditable.innerHTML;
                     content = content.replace(/<\/label>/g, '</label><br>');
-                    const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Packing List</title></head><body>${content}</body></html>`;
+                    const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Packing List</title></head><body>${content}
+<!-- Ensure Thailand politeness note appears exactly once and at the end -->
+<script>
+(function () {
+  var listEl = document.getElementById('essential-phrases-list');
+  var countrySel = document.getElementById('country-select');
+  if (!listEl || !countrySel) return;
+
+  var timer = null;
+  function schedule() {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(enforceThaiNoteUnique, 0); // run after list finishes rendering
+  }
+
+  function enforceThaiNoteUnique() {
+    // Remove any existing note(s)
+    Array.prototype.slice.call(listEl.querySelectorAll('li[data-thai-note]')).forEach(function(li){ li.remove(); });
+    if (countrySel.value !== 'Thailand') return;
+    // Append exactly one note at the end
+    var li = document.createElement('li');
+    li.setAttribute('data-thai-note','1');
+    li.textContent = 'Note: Generally, females use "ka" and males use "krap" after some statements or questions to be more polite.';
+    listEl.appendChild(li);
+  }
+
+  // Run when the list changes (debounced) and when selectors change
+  if (window.MutationObserver) {
+    new MutationObserver(schedule).observe(listEl, { childList: true });
+  }
+  countrySel.addEventListener('change', schedule);
+  var catSel = document.getElementById('essential-phrase-category-select');
+  if (catSel) catSel.addEventListener('change', schedule);
+
+  // Initial run
+  window.addEventListener('DOMContentLoaded', schedule);
+})();
+</script>
+
+</body></html>`;
                     const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
                     const url = URL.createObjectURL(blob);
                     const link = document.createElement('a');
@@ -4809,5 +4847,43 @@ if (typeof selectedCountry !== 'undefined' && selectedCountry === 'Thailand') {
             }
         });
     </script>
+
+<!-- Ensure Thailand politeness note appears exactly once and at the end -->
+<script>
+(function () {
+  var listEl = document.getElementById('essential-phrases-list');
+  var countrySel = document.getElementById('country-select');
+  if (!listEl || !countrySel) return;
+
+  var timer = null;
+  function schedule() {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(enforceThaiNoteUnique, 0); // run after list finishes rendering
+  }
+
+  function enforceThaiNoteUnique() {
+    // Remove any existing note(s)
+    Array.prototype.slice.call(listEl.querySelectorAll('li[data-thai-note]')).forEach(function(li){ li.remove(); });
+    if (countrySel.value !== 'Thailand') return;
+    // Append exactly one note at the end
+    var li = document.createElement('li');
+    li.setAttribute('data-thai-note','1');
+    li.textContent = 'Note: Generally, females use "ka" and males use "krap" after some statements or questions to be more polite.';
+    listEl.appendChild(li);
+  }
+
+  // Run when the list changes (debounced) and when selectors change
+  if (window.MutationObserver) {
+    new MutationObserver(schedule).observe(listEl, { childList: true });
+  }
+  countrySel.addEventListener('change', schedule);
+  var catSel = document.getElementById('essential-phrase-category-select');
+  if (catSel) catSel.addEventListener('change', schedule);
+
+  // Initial run
+  window.addEventListener('DOMContentLoaded', schedule);
+})();
+</script>
+
 </body>
 </html>
