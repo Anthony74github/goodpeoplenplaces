@@ -249,6 +249,7 @@
                                 <option value="directions">Directions</option>
                             </select>
                             <ul id="essential-phrases-list" class="list-disc list-inside space-y-1 text-gray-700"></ul>
+<p id="phrases-note" class="text-base text-gray-600 mt-2 hidden"></p>
                         </div>
                     </div>
                 </div>
@@ -446,6 +447,20 @@
         <div class="container mx-auto max-w-6xl">
             <!-- Added handshake emoji to foster a sense of connection and sharing -->
             <h2 class="text-3xl md:text-4xl font-bold mb-8 text-center text-gray-900">Share Your Trip 🤝</h2>
+<div class="flex justify-center mt-4">
+  <button id="join-btn" class="button-gradient text-white py-2 px-6 rounded-md shadow-md hover:scale-105 transition duration-300">
+    Join
+  </button>
+</div>
+<div id="profile-card" class="mt-4 flex flex-col items-center hidden">
+  <img id="profile-photo" class="w-20 h-20 rounded-full object-cover border border-gray-300 shadow-sm" alt="Profile">
+  <div class="text-center mt-2 text-sm text-gray-800">
+    <div id="profile-username" class="font-semibold"></div>
+    <div id="profile-from" class="text-gray-600"></div>
+    <div id="profile-greeting" class="italic text-gray-700"></div>
+  </div>
+  <button id="logout-btn" class="mt-2 text-blue-600 hover:underline text-sm">Log out</button>
+</div>
             <p class="text-lg md:text-xl text-gray-700 mb-8 text-center">Upload a photo and tell us about your past or planned travels!</p>
             <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl border border-gray-200 transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl mb-10">
                 <form id="comment-form" class="space-y-4">
@@ -2721,96 +2736,90 @@
         };
 
         // Short, sweet recommendation statements for the Start Exploring feature.
-        
-const recommendationStatements = {
-  'Argentina': 'some sizzling steak and a tango lesson in Buenos Aires',
-  'Australia': 'road-tripping the Great Ocean Road and snorkelling the Reef',
-  'Austria': 'classical concerts and alpine views',
-  'Canada': 'ice-blue lakes and mountain towns',
-  'China': 'the Great Wall and futuristic skylines',
-  'Colombia': 'colorful towns and Caribbean beaches',
-  'Croatia': 'turquoise bays and walled old towns',
-  'Denmark': 'cozy hygge cafés and castles',
-  'Egypt': 'pyramids at sunrise and Nile felucca rides',
-  'Finland': 'a steamy sauna beneath the northern lights',
-  'France': 'croissants under the Eiffel Tower and world-class art',
-  'Germany': 'beer gardens and fairy‑tale castles',
-  'Greece': 'sunny islands and ancient ruins',
-  'Hong Kong': 'Peak views and dim sum',
-  'Hungary': 'thermal baths and riverside walks',
-  'India': 'spice markets and palace cities',
-  'Indonesia': 'Bali beaches and Komodo dragons',
-  'Italy': 'pizza in Naples and strolling through ancient ruins',
-  'Japan': 'neon nights and temple mornings',
-  'Malaysia': 'rainforests and hawker feasts',
-  'Mexico': 'cenotes and colonial plazas',
-  'Morocco': 'desert camps and blue alleys',
-  'Netherlands': 'canals and windmills',
-  'New Zealand': 'glow-worm caves and alpine hikes',
-  'Norway': 'cruising majestic fjords and hiking to dizzying cliffs',
-  'Philippines': 'island-hopping and jeepney rides',
-  'Poland': 'medieval squares and cozy milk bars',
-  'Portugal': 'tile-lined streets and pastéis de nata',
-  'Romania': 'wandering through Dracula’s castle and medieval towns',
-  'Saudi Arabia': 'red-sand deserts and ancient rock art',
-  'Singapore': 'supertrees and hawker centres',
-  'South Africa': 'safari drives and Table Mountain',
-  'South Korea': 'palaces by day and K‑nightlife by night',
-  'Spain': 'tapas crawls and Gaudí architecture',
-  'Sweden': 'island ferries and fika',
-  'Switzerland': 'glacier views and scenic trains',
-  'Tanzania': 'Serengeti safaris and Zanzibar beaches',
-  'Thailand': 'temple hopping and spicy street food',
-  'Turkey': 'ancient bazaars and hot‑air balloons over Cappadocia',
-  'United Kingdom': 'pub walks and royal parks',
-  'United States': 'national parks and iconic skylines',
-  'Vietnam': 'limestone bays and fragrant street food'
-};
+        const recommendationStatements = {
+            'Argentina': 'some sizzling steak and a tango lesson in Buenos Aires',
+            'Finland': 'a steamy sauna beneath the northern lights',
+            'Romania': 'wandering through Dracula’s castle and medieval towns',
+            'Norway': 'cruising majestic fjords and hiking to dizzying cliffs',
+            'Italy': 'pizza in Naples and strolling through ancient ruins',
+            'France': 'croissants under the Eiffel Tower and world-class art',
+            'Spain': 'tapas, sangria and flamenco under the sun',
+            'Germany': 'beer gardens and fairy-tale castles on the Rhine',
+            'Austria': 'classical concerts and breathtaking alpine vistas',
+            'United States': 'national parks and iconic city skylines',
+            'Mexico': 'colourful fiestas and sandy beaches',
+            'Thailand': 'temple hopping and spicy street food',
+            'China': 'the Great Wall and futuristic cityscapes',
+            'Turkey': 'ancient bazaars and surreal landscapes',
+            'Japan': 'sushi feasts and cherry blossoms in bloom',
+            'Greece': 'island-hopping and ancient temples',
+            'Malaysia': 'rainforests and multicultural flavours',
+            'Portugal': 'pastel-coloured streets and port wine tastings',
+            'South Korea': 'K-pop energy and royal palaces',
+            'Netherlands': 'canal cruises and tulip fields',
+            'Canada': 'mountain adventures and vibrant cities',
+            'Switzerland': 'chocolate indulgence and scenic train rides',
+            'Singapore': 'sky gardens and hawker centre delights',
+            'Saudi Arabia': 'vast deserts and a modern metropolis',
+            'Poland': 'charming squares and hearty pierogi',
+            'Hungary': 'thermal baths and Danube river cruises',
+            'India': 'colourful festivals and spicy curries',
+            'Croatia': 'Adriatic beaches and medieval walls',
+            'Indonesia': 'tropical islands and volcanic landscapes',
+            'Morocco': 'vibrant souks and desert sunsets',
+            'Denmark': 'hygge cafés and Viking history',
+            'Philippines': 'crystal clear waters and friendly smiles',
+            'Tanzania': 'safari adventures and Mt. Kilimanjaro',
+            'New Zealand': 'hobbit landscapes and extreme sports',
+            'Vietnam': 'bustling markets and serene rice paddies',
+            'Sweden': 'fika breaks and northern lights',
+            'Egypt': 'pyramids and Nile cruises',
+            'South Africa': 'wildlife safaris and Cape Town’s beauty'
+        };
 
-const countryGeo = {
-  'Argentina': { lat: -34.0, lon: -64.0, locationDesc: 'Argentina spans the Andes, pampas grasslands and Patagonian steppe.', weatherDesc: 'Temperate in the north, cooler in the south; seasons are opposite the Northern Hemisphere.' },
-  'Australia': { lat: -25.0, lon: 133.0, locationDesc: 'Australia is a vast continent with deserts, rainforests and long coastlines.', weatherDesc: 'Tropical in the north to temperate in the south, with arid interior regions.' },
-  'Austria': { lat: 47.5, lon: 14.5, locationDesc: 'Austria is a landlocked alpine country in Central Europe.', weatherDesc: 'Temperate continental climate with cold winters and warm summers.' },
-  'Canada': { lat: 56.0, lon: -106.0, locationDesc: 'Canada stretches from the Atlantic to the Pacific and Arctic Oceans.', weatherDesc: 'Cold winters, mild to warm summers; climate varies widely by region.' },
-  'China': { lat: 35.0, lon: 105.0, locationDesc: 'China ranges from mountains and deserts to fertile plains and coastline.', weatherDesc: 'From subarctic in the north to tropical in the south, influenced by monsoons.' },
-  'Colombia': { lat: 4.5, lon: -74.0, locationDesc: 'Colombia spans Andes highlands, Amazon rainforest and Caribbean/ Pacific coasts.', weatherDesc: 'Tropical near sea level; cooler in the Andes with distinct wet/dry seasons.' },
-  'Croatia': { lat: 45.1, lon: 15.2, locationDesc: 'Croatia has a long Adriatic coastline and karst landscapes.', weatherDesc: 'Mediterranean on the coast, continental inland.' },
-  'Denmark': { lat: 56.0, lon: 10.0, locationDesc: 'Denmark is a low-lying Scandinavian country of islands and peninsula.', weatherDesc: 'Temperate maritime climate with mild summers and cool, windy winters.' },
-  'Egypt': { lat: 26.0, lon: 30.0, locationDesc: 'Egypt centres on the Nile with surrounding Sahara desert.', weatherDesc: 'Hot, dry desert climate; cooler along the Mediterranean coast.' },
-  'Finland': { lat: 64.0, lon: 26.0, locationDesc: 'Finland has thousands of lakes and vast boreal forests.', weatherDesc: 'Cold winters, mild summers; subarctic in the far north.' },
-  'France': { lat: 46.0, lon: 2.0, locationDesc: 'France spans Atlantic coasts, mountains and Mediterranean shores.', weatherDesc: 'Oceanic in the west, Mediterranean in the south, continental in the east.' },
-  'Germany': { lat: 51.0, lon: 10.0, locationDesc: 'Germany features forests, rivers and the Alps in the south.', weatherDesc: 'Temperate seasonal climate with moderate rainfall year-round.' },
-  'Greece': { lat: 39.0, lon: 22.0, locationDesc: 'Greece is mountainous with many Aegean and Ionian islands.', weatherDesc: 'Mediterranean: hot, dry summers and mild, wet winters.' },
-  'Hong Kong': { lat: 22.3, lon: 114.2, locationDesc: 'Hong Kong is a hilly coastal territory on the South China Sea.', weatherDesc: 'Subtropical with hot, humid summers; mild winters.' },
-  'Hungary': { lat: 47.0, lon: 19.0, locationDesc: 'Hungary lies in the Carpathian Basin around the Danube plain.', weatherDesc: 'Continental: cold winters, warm summers.' },
-  'India': { lat: 21.0, lon: 78.0, locationDesc: 'India spans the Himalayas to coastal plains and plateaus.', weatherDesc: 'Tropical monsoon influence; cooler in the north and highlands.' },
-  'Indonesia': { lat: -2.0, lon: 118.0, locationDesc: 'Indonesia is an archipelago of thousands of equatorial islands.', weatherDesc: 'Tropical, humid, with wet and dry seasons.' },
-  'Italy': { lat: 42.8, lon: 12.5, locationDesc: 'Italy is a Mediterranean peninsula with Alpine north.', weatherDesc: 'Mediterranean: hot summers, mild winters; cooler in the Alps.' },
-  'Japan': { lat: 36.0, lon: 138.0, locationDesc: 'Japan is a mountainous archipelago in the Pacific.', weatherDesc: 'Humid temperate to subtropical; snowy winters in the north.' },
-  'Malaysia': { lat: 4.0, lon: 102.0, locationDesc: 'Malaysia straddles the equator across Peninsular and Borneo regions.', weatherDesc: 'Equatorial tropical climate with abundant rainfall.' },
-  'Mexico': { lat: 23.0, lon: -102.0, locationDesc: 'Mexico includes deserts, mountains and tropical coasts.', weatherDesc: 'Varies: arid north, temperate highlands, tropical coasts.' },
-  'Morocco': { lat: 31.8, lon: -7.1, locationDesc: 'Morocco spans the Atlas Mountains to Atlantic/Mediterranean coasts.', weatherDesc: 'Mediterranean along the coast, semi‑arid inland.' },
-  'Netherlands': { lat: 52.1, lon: 5.3, locationDesc: 'The Netherlands is a low-lying country with canals and polders.', weatherDesc: 'Marine climate with mild summers and cool, damp winters.' },
-  'New Zealand': { lat: -41.0, lon: 174.0, locationDesc: 'New Zealand has alpine ranges and coastal plains.', weatherDesc: 'Temperate maritime climate; wetter on the west coasts.' },
-  'Norway': { lat: 60.0, lon: 8.0, locationDesc: 'Norway is mountainous with deep fjords and long coastline.', weatherDesc: 'Cool temperate to subarctic; Gulf Stream moderates coasts.' },
-  'Philippines': { lat: 12.9, lon: 121.8, locationDesc: 'The Philippines is a tropical archipelago in the western Pacific.', weatherDesc: 'Tropical marine climate with rainy and dry seasons.' },
-  'Poland': { lat: 52.0, lon: 19.0, locationDesc: 'Poland has plains, lakes and mountains along its southern border.', weatherDesc: 'Temperate continental with snowy winters and warm summers.' },
-  'Portugal': { lat: 39.6, lon: -8.0, locationDesc: 'Portugal lies on the Iberian Atlantic coast.', weatherDesc: 'Mediterranean influence: warm, dry summers and mild winters.' },
-  'Romania': { lat: 45.9, lon: 25.0, locationDesc: 'Romania contains the Carpathians and Danube delta.', weatherDesc: 'Temperate-continental with four seasons.' },
-  'Saudi Arabia': { lat: 23.9, lon: 45.0, locationDesc: 'Saudi Arabia is a vast Arabian Desert country.', weatherDesc: 'Extremely hot, arid climate; cooler in highlands.' },
-  'Singapore': { lat: 1.35, lon: 103.8, locationDesc: 'Singapore is a compact island city-state at the equator.', weatherDesc: 'Equatorial: hot and humid year‑round with frequent showers.' },
-  'South Africa': { lat: -30.0, lon: 25.0, locationDesc: 'South Africa ranges from savanna to coastal mountains.', weatherDesc: 'Varied: Mediterranean south-west, subtropical east, semi‑arid interior.' },
-  'South Korea': { lat: 36.0, lon: 128.0, locationDesc: 'South Korea occupies the southern Korean Peninsula.', weatherDesc: 'Temperate with four seasons; hot summers, cold winters.' },
-  'Spain': { lat: 40.0, lon: -4.0, locationDesc: 'Spain includes plateaus, mountains and Mediterranean coasts.', weatherDesc: 'Mediterranean south/east; oceanic north; continental interior.' },
-  'Sweden': { lat: 62.0, lon: 15.0, locationDesc: 'Sweden stretches from Baltic coasts to Arctic Lapland.', weatherDesc: 'Cold winters in the north; milder south.' },
-  'Switzerland': { lat: 46.8, lon: 8.2, locationDesc: 'Switzerland is an alpine country with valleys and lakes.', weatherDesc: 'Alpine climate in the mountains; temperate in lowlands.' },
-  'Tanzania': { lat: -6.0, lon: 35.0, locationDesc: 'Tanzania spans the Serengeti, Great Rift Valley and Indian Ocean coast.', weatherDesc: 'Tropical; cooler in the highlands with two rainy seasons.' },
-  'Thailand': { lat: 15.0, lon: 101.0, locationDesc: 'Thailand is tropical with mountains, plains and beaches.', weatherDesc: 'Tropical monsoon with distinct wet/dry seasons.' },
-  'Turkey': { lat: 39.0, lon: 35.0, locationDesc: 'Turkey bridges Europe and Asia with varied terrain.', weatherDesc: 'Mediterranean on the coasts; continental inland.' },
-  'United Kingdom': { lat: 54.0, lon: -2.0, locationDesc: 'The UK is an island nation of rolling hills and rugged coasts.', weatherDesc: 'Maritime climate: mild temperatures, frequent rain.' },
-  'United States': { lat: 39.8, lon: -98.6, locationDesc: 'The U.S. ranges from Alaska tundra to tropical Hawaii and Florida.', weatherDesc: 'Highly varied; continental interiors have hot summers and cold winters.' },
-  'Vietnam': { lat: 16.0, lon: 108.0, locationDesc: 'Vietnam is a long S‑shaped country with mountains and deltas.', weatherDesc: 'Tropical/monsoonal in the south; more temperate in the north.' }
-};
+        // Geographic and climate information for each country.  These values provide approximate coordinates to position
+        // the marker on the world map and short descriptions for the location and climate.  Latitudes and longitudes are
+        // approximate and use the centre of the country.  Climate descriptions are deliberately broad.
+        const countryGeo = {
+            'Australia': { lat: -25.0, lon: 133.0, locationDesc: 'Australia is a vast island continent in the southern hemisphere between the Pacific and Indian Oceans.', weatherDesc: 'It has diverse climates, from tropical in the north to temperate in the south, with arid interior regions.' },
+            'Austria': { lat: 47.5, lon: 14.5, locationDesc: 'Austria is a landlocked country in central Europe nestled in the Alps.', weatherDesc: 'It has a temperate continental climate with cold winters and warm summers.' },
+            'Colombia': { lat: 4.5, lon: -74.0, locationDesc: 'Colombia is in northern South America, with coastlines on both the Caribbean Sea and the Pacific Ocean.', weatherDesc: 'It features varied climates—from tropical rainforests and savannas to cooler highland and Andean regions.' },
+            'France': { lat: 46.5, lon: 2.0, locationDesc: 'France is in Western Europe, bordered by Belgium, Germany, Italy and Spain, with coasts on the Atlantic Ocean and Mediterranean Sea.', weatherDesc: 'It has a mostly temperate climate with mild winters and warm summers; the Mediterranean south is sunnier and drier.' },
+            'Spain': { lat: 40.0, lon: -3.7, locationDesc: 'Spain occupies most of the Iberian Peninsula in southwestern Europe.', weatherDesc: 'It enjoys a Mediterranean climate with hot, dry summers and mild, wet winters; the north is cooler and wetter.' },
+            'United States': { lat: 39.5, lon: -98.35, locationDesc: 'The United States spans North America from the Atlantic to the Pacific, including Alaska and Hawaii.', weatherDesc: 'Its climate ranges from arctic in Alaska and tropical in Hawaii and Florida to arid deserts and temperate zones elsewhere.' },
+            'China': { lat: 35.0, lon: 105.0, locationDesc: 'China covers much of East Asia, stretching from the Pacific coast to the Himalayas.', weatherDesc: 'Its climate varies from subarctic in the north to tropical in the south, influenced by monsoons.' },
+            'Italy': { lat: 42.7, lon: 12.7, locationDesc: 'Italy is a boot‑shaped peninsula in southern Europe extending into the Mediterranean Sea.', weatherDesc: 'It has a Mediterranean climate with hot, dry summers and mild, wet winters; alpine conditions prevail in the north.' },
+            'Turkey': { lat: 39.0, lon: 35.0, locationDesc: 'Turkey bridges southeastern Europe and western Asia, bounded by the Black, Aegean and Mediterranean Seas.', weatherDesc: 'It experiences diverse climates, from Mediterranean coastal weather to continental and semi‑arid inland conditions.' },
+            'Mexico': { lat: 23.0, lon: -102.0, locationDesc: 'Mexico lies in North America south of the United States, bordered by the Pacific Ocean, Caribbean Sea and Gulf of Mexico.', weatherDesc: 'It has tropical and desert climates, with wet summers and dry winters; highland regions are cooler.' },
+            'Thailand': { lat: 15.0, lon: 100.0, locationDesc: 'Thailand is in Southeast Asia on the Indochinese Peninsula, bordered by Myanmar, Laos, Cambodia and Malaysia.', weatherDesc: 'It has a tropical climate with hot, humid weather year‑round and a pronounced monsoon season.' },
+            'Germany': { lat: 51.0, lon: 10.0, locationDesc: 'Germany lies in central Europe, bordered by nine countries and the North and Baltic Seas.', weatherDesc: 'It has a temperate seasonal climate with moderate summers and cold winters.' },
+            'United Kingdom': { lat: 55.0, lon: -3.0, locationDesc: 'The United Kingdom is an island nation off the northwestern coast of mainland Europe.', weatherDesc: 'It experiences a temperate maritime climate with mild temperatures, frequent rain and changeable weather.' },
+            'Japan': { lat: 36.0, lon: 138.0, locationDesc: 'Japan is an archipelago in East Asia along the Pacific Ocean east of the Korean Peninsula.', weatherDesc: 'Its climate ranges from humid subtropical in the south to cold temperate in the north, with distinct seasons and abundant rainfall.' },
+            'Greece': { lat: 39.0, lon: 22.0, locationDesc: 'Greece lies on the southern tip of the Balkan Peninsula and includes numerous islands in the Aegean and Ionian Seas.', weatherDesc: 'It has a Mediterranean climate with hot, dry summers and mild, wet winters.' },
+            'Malaysia': { lat: 4.0, lon: 102.0, locationDesc: 'Malaysia consists of two regions separated by the South China Sea: Peninsular Malaysia on the Malay Peninsula and Malaysian Borneo.', weatherDesc: 'It has a tropical rainforest climate—hot and humid year‑round with heavy monsoon rains.' },
+            'Portugal': { lat: 39.5, lon: -8.0, locationDesc: 'Portugal occupies the westernmost part of the Iberian Peninsula along the Atlantic Ocean.', weatherDesc: 'It has a Mediterranean climate with warm, dry summers and mild, rainy winters; the north is cooler.' },
+            'Canada': { lat: 56.0, lon: -106.0, locationDesc: 'Canada occupies much of northern North America, stretching from the Atlantic to the Pacific and into the Arctic.', weatherDesc: 'It has a cold climate overall with long winters and short summers; coastal regions are milder.' },
+            'South Korea': { lat: 36.5, lon: 127.8, locationDesc: 'South Korea occupies the southern half of the Korean Peninsula in East Asia.', weatherDesc: 'It experiences a temperate climate with four distinct seasons, including hot, humid summers and cold, dry winters.' },
+            'Hong Kong': { lat: 22.3, lon: 114.2, locationDesc: 'Hong Kong is a special administrative region on China’s south coast, encompassing a peninsula and islands in the Pearl River Delta.', weatherDesc: 'It has a subtropical climate with hot, humid summers and mild winters, influenced by monsoons.' },
+            'Netherlands': { lat: 52.5, lon: 5.5, locationDesc: 'The Netherlands is a low‑lying country in Western Europe along the North Sea.', weatherDesc: 'It has a temperate maritime climate with mild summers, cool winters and frequent rainfall.' },
+            'Saudi Arabia': { lat: 25.0, lon: 45.0, locationDesc: 'Saudi Arabia covers most of the Arabian Peninsula in the Middle East.', weatherDesc: 'It has a desert climate with extremely hot summers, mild winters and very little rainfall.' },
+            'Poland': { lat: 52.0, lon: 19.0, locationDesc: 'Poland is in central Europe east of Germany, with a coastline on the Baltic Sea.', weatherDesc: 'It has a temperate continental climate with cold winters and warm summers.' },
+            'Hungary': { lat: 47.0, lon: 20.0, locationDesc: 'Hungary is a landlocked country in central Europe within the Carpathian Basin.', weatherDesc: 'It has a temperate continental climate with hot summers, cold winters and moderate rainfall.' },
+            'India': { lat: 21.0, lon: 78.0, locationDesc: 'India occupies most of the Indian subcontinent in South Asia, bordered by the Himalayas and surrounded by the Indian Ocean.', weatherDesc: 'It has diverse climates from tropical monsoon in the south to alpine in the north, with hot, wet summers and cooler, dry winters.' },
+            'Switzerland': { lat: 46.8, lon: 8.2, locationDesc: 'Switzerland is a landlocked Alpine country in central Europe bordered by France, Germany, Austria, Italy and Liechtenstein.', weatherDesc: 'It has a temperate climate with cold winters and warm summers; cooler in the mountains.' },
+            'Croatia': { lat: 45.1, lon: 15.2, locationDesc: 'Croatia is in southeastern Europe along the Adriatic Sea, with a long coastline and numerous islands.', weatherDesc: 'It has a Mediterranean climate along the coast and a continental climate inland.' },
+            'Indonesia': { lat: -5.0, lon: 120.0, locationDesc: 'Indonesia is an archipelago in Southeast Asia and Oceania, spanning the equator between the Indian and Pacific Oceans.', weatherDesc: 'It has a tropical climate with high humidity and two seasons: wet and dry.' },
+            'Morocco': { lat: 32.0, lon: -6.0, locationDesc: 'Morocco is in northwestern Africa with coastlines on the Atlantic Ocean and Mediterranean Sea.', weatherDesc: 'It has a Mediterranean climate in the north and a desert climate in the interior and south.' },
+            'Denmark': { lat: 56.0, lon: 9.0, locationDesc: 'Denmark is a Scandinavian country in northern Europe consisting of a peninsula and numerous islands.', weatherDesc: 'It has a temperate maritime climate with mild winters, cool summers and frequent wind.' },
+            'New Zealand': { lat: -41.0, lon: 174.3, locationDesc: 'New Zealand is a mountainous island nation in the southwest Pacific Ocean comprising two main islands and numerous smaller ones.', weatherDesc: 'It has a temperate maritime climate with mild temperatures, moderate rainfall and abundant sunshine.' }
+            ,'Vietnam': { lat: 16.0, lon: 107.5, locationDesc: 'Vietnam is a long, S‑shaped country on the eastern edge of mainland Southeast Asia, stretching along the South China Sea.', weatherDesc: 'Its climate varies from humid subtropical in the north to tropical monsoon in the south with distinct wet and dry seasons.' }
+            ,'Argentina': { lat: -34.0, lon: -64.0, locationDesc: 'Argentina occupies much of southern South America from the subtropical Gran Chaco in the north to windswept Patagonia in the south.', weatherDesc: 'It has diverse climates—subtropical in the north, temperate in the central Pampas and cold and arid in Patagonia—with seasons opposite those of the northern hemisphere.' }
+            // Added entries for Sweden, Egypt and South Africa
+            ,'Sweden': { lat: 60.0, lon: 15.0, locationDesc: 'Sweden is a Scandinavian country in northern Europe made up of a long peninsula and thousands of coastal islands.', weatherDesc: 'It has a temperate climate with cold, snowy winters and mild to warm summers.' }
+            ,'Egypt': { lat: 26.0, lon: 30.0, locationDesc: 'Egypt lies in north‑eastern Africa with the Sinai Peninsula bridging Africa and Asia; the Nile River flows northwards through the country to the Mediterranean Sea.', weatherDesc: 'It has a hot desert climate with minimal rainfall; coastal areas along the Mediterranean and Red Sea are cooler and more humid.' }
+            ,'South Africa': { lat: -29.0, lon: 24.0, locationDesc: 'South Africa occupies the southern tip of the African continent, bordered by both the Atlantic and Indian Oceans and completely surrounding Lesotho and Eswatini.', weatherDesc: 'It experiences a variety of climates—from Mediterranean in the south‑west to subtropical along the east coast and semi‑arid in the interior.' }
+        };
+
         /**
          * Flag colour and code mappings.  These approximate the prominent colours of each country’s flag for use as a light
          * background in the history section, and provide ISO 3166‑1 alpha‑2 codes for loading flag images from flagcdn.com.
@@ -4761,7 +4770,172 @@ function renderEssentialPhrasesForCategory() {
                     // Insert a line break after each label to ensure items appear on separate lines in the downloaded file
                     let content = packingListEditable.innerHTML;
                     content = content.replace(/<\/label>/g, '</label><br>');
-                    const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Packing List</title></head><body>${content}</body></html>`;
+                    const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Packing List</title></head><body>${content}<!-- Join Modal -->
+<div id="join-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden items-center justify-center">
+  <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl w-[92%] max-w-md">
+    <h3 class="text-xl font-semibold mb-4 text-center text-blue-600">Create Your Profile</h3>
+    <form id="join-form" class="space-y-3">
+      <div>
+        <label class="block text-sm font-semibold mb-1" for="join-photo">Profile Picture</label>
+        <input id="join-photo" type="file" accept="image/*" class="w-full p-2 border border-gray-300 rounded-md">
+      </div>
+      <div>
+        <label class="block text-sm font-semibold mb-1" for="join-username">Username</label>
+        <input id="join-username" type="text" maxlength="30" class="w-full p-3 border border-gray-300 rounded-md" placeholder="e.g., SunnyTraveler" required>
+      </div>
+      <div>
+        <label class="block text-sm font-semibold mb-1" for="join-from">From</label>
+        <input id="join-from" type="text" maxlength="40" class="w-full p-3 border border-gray-300 rounded-md" placeholder="e.g., NYC, USA">
+      </div>
+      <div>
+        <label class="block text-sm font-semibold mb-1" for="join-greeting">Greeting</label>
+        <input id="join-greeting" type="text" maxlength="80" class="w-full p-3 border border-gray-300 rounded-md" placeholder="e.g., Happy to meet you all!">
+      </div>
+      <div class="flex justify-between items-center pt-2">
+        <button type="button" id="join-cancel" class="text-gray-600 hover:underline">Cancel</button>
+        <button type="submit" class="button-gradient text-white py-2 px-6 rounded-md shadow-md">Save & Continue</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Thailand note + Join gating (non-destructive) -->
+<script>
+(function () {
+  // Helpers
+  function $(id){ return document.getElementById(id); }
+  function saveProfile(p){ localStorage.setItem('profileV2', JSON.stringify(p)); }
+  function loadProfile(){ try { return JSON.parse(localStorage.getItem('profileV2') || 'null'); } catch { return null; } }
+
+  /* -------- Thailand note: bigger font, once, Thailand-only -------- */
+  function updateThaiNote() {
+    var note = $('phrases-note');
+    var list = $('essential-phrases-list');
+    if (!note || !list) return;
+    // determine current country (global selectedCountry set by site)
+    try {
+      if (typeof selectedCountry !== 'undefined' && selectedCountry === 'Thailand') {
+        note.textContent = 'Generally, females use "ka" and males use "krap" after some statements or questions to be more polite.';
+        note.classList.remove('hidden');
+      } else {
+        note.textContent = '';
+        note.classList.add('hidden');
+      }
+    } catch (_) {}
+  }
+  document.addEventListener('change', function(e){
+    if (e.target && (e.target.id === 'country-select' || e.target.id === 'essential-phrase-category-select')) {
+      setTimeout(updateThaiNote, 0);
+    }
+  });
+  if (window.MutationObserver && $('essential-phrases-list')) {
+    new MutationObserver(function(){ setTimeout(updateThaiNote, 0); })
+      .observe($('essential-phrases-list'), { childList: true });
+  }
+
+  /* -------- Join UI & gating -------- */
+  var joinBtn = $('join-btn');
+  var overlay = $('join-overlay');
+  var joinForm = $('join-form');
+  var cancelBtn = $('join-cancel');
+  var profileCard = $('profile-card');
+  var profilePhoto = $('profile-photo');
+  var profileUsername = $('profile-username');
+  var profileFrom = $('profile-from');
+  var profileGreeting = $('profile-greeting');
+  var logoutBtn = $('logout-btn');
+
+  var commentForm = $('comment-form');
+  var commentPhoto = $('comment-photo');
+  var commentText = $('comment-text');
+  var commentsDisplay = $('comments-display');
+
+  function openOverlay(){ if (overlay) { overlay.classList.remove('hidden'); overlay.classList.add('flex'); } }
+  function closeOverlay(){ if (overlay) { overlay.classList.add('hidden'); overlay.classList.remove('flex'); } }
+
+  function applyProfileUI(){
+    var p = loadProfile();
+    if (!profileCard) return;
+    if (p) {
+      profileCard.classList.remove('hidden');
+      profileUsername.textContent = p.username || '';
+      profileFrom.textContent = p.from || '';
+      profileGreeting.textContent = p.greeting || '';
+      if (p.photoDataUrl) { profilePhoto.src = p.photoDataUrl; profilePhoto.classList.remove('hidden'); }
+      else { profilePhoto.src = ''; profilePhoto.classList.add('hidden'); }
+    } else {
+      profileCard.classList.add('hidden');
+    }
+  }
+
+  joinBtn && joinBtn.addEventListener('click', openOverlay);
+  cancelBtn && cancelBtn.addEventListener('click', closeOverlay);
+
+  joinForm && joinForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    var username = (document.getElementById('join-username').value || '').trim();
+    var from = (document.getElementById('join-from').value || '').trim();
+    var greeting = (document.getElementById('join-greeting').value || '').trim();
+    var file = document.getElementById('join-photo').files[0];
+    if (!username) { alert('Please enter a username.'); return; }
+    function finish(url){ saveProfile({ username: username, from: from, greeting: greeting, photoDataUrl: url || '' }); closeOverlay(); applyProfileUI(); }
+    if (file) {
+      if (!file.type || file.type.indexOf('image/') !== 0) { alert('Please select an image file.'); return; }
+      var fr = new FileReader();
+      fr.onload = function(){ finish(fr.result); };
+      fr.onerror = function(){ alert('Could not read the selected image.'); };
+      fr.readAsDataURL(file);
+    } else { finish(''); }
+  });
+
+  logoutBtn && logoutBtn.addEventListener('click', function(){
+    localStorage.removeItem('profileV2');
+    applyProfileUI();
+  });
+
+  // Gate the comment form before any existing handler (capture phase)
+  if (commentForm) {
+    commentForm.addEventListener('submit', function(e){
+      var p = loadProfile();
+      if (!p) { e.preventDefault(); e.stopImmediatePropagation(); openOverlay(); return; }
+      var file = commentPhoto && commentPhoto.files ? commentPhoto.files[0] : null;
+      var text = commentText ? (commentText.value || '').trim() : '';
+      if (!file) { e.preventDefault(); e.stopImmediatePropagation(); alert('Please add exactly one picture.'); return; }
+      if (!text) { e.preventDefault(); e.stopImmediatePropagation(); alert('Please add a comment.'); return; }
+      // else let the site's original submission code run.
+    }, true);
+  }
+
+  // Augment new posts with the current user's profile header
+  function augmentCards() {
+    var p = loadProfile();
+    if (!p || !commentsDisplay) return;
+    Array.prototype.forEach.call(commentsDisplay.children, function(card){
+      if (card.getAttribute('data-profile-applied') === '1') return;
+      var header = document.createElement('div');
+      header.className = 'flex items-center mb-2';
+      header.innerHTML =
+        (p.photoDataUrl ? '<img src="'+p.photoDataUrl+'" class="w-10 h-10 rounded-full object-cover border border-gray-300 mr-2" alt="Profile">' : '') +
+        '<div class="text-sm"><div class="font-semibold">'+ (p.username || '') +'</div>' +
+        (p.from ? '<div class="text-gray-600">'+ p.from +'</div>' : '') +
+        (p.greeting ? '<div class="italic text-gray-700">'+ p.greeting +'</div>' : '') + '</div>';
+      card.insertBefore(header, card.firstChild);
+      card.setAttribute('data-profile-applied','1');
+    });
+  }
+  if (window.MutationObserver && commentsDisplay) {
+    new MutationObserver(augmentCards).observe(commentsDisplay, { childList: true });
+  }
+
+  window.addEventListener('DOMContentLoaded', function(){
+    applyProfileUI();
+    updateThaiNote();
+    augmentCards();
+  });
+})();
+</script>
+
+</body></html>`;
                     const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
                     const url = URL.createObjectURL(blob);
                     const link = document.createElement('a');
@@ -4798,5 +4972,170 @@ function renderEssentialPhrasesForCategory() {
             }
         });
     </script>
+<!-- Join Modal -->
+<div id="join-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden items-center justify-center">
+  <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl w-[92%] max-w-md">
+    <h3 class="text-xl font-semibold mb-4 text-center text-blue-600">Create Your Profile</h3>
+    <form id="join-form" class="space-y-3">
+      <div>
+        <label class="block text-sm font-semibold mb-1" for="join-photo">Profile Picture</label>
+        <input id="join-photo" type="file" accept="image/*" class="w-full p-2 border border-gray-300 rounded-md">
+      </div>
+      <div>
+        <label class="block text-sm font-semibold mb-1" for="join-username">Username</label>
+        <input id="join-username" type="text" maxlength="30" class="w-full p-3 border border-gray-300 rounded-md" placeholder="e.g., SunnyTraveler" required>
+      </div>
+      <div>
+        <label class="block text-sm font-semibold mb-1" for="join-from">From</label>
+        <input id="join-from" type="text" maxlength="40" class="w-full p-3 border border-gray-300 rounded-md" placeholder="e.g., NYC, USA">
+      </div>
+      <div>
+        <label class="block text-sm font-semibold mb-1" for="join-greeting">Greeting</label>
+        <input id="join-greeting" type="text" maxlength="80" class="w-full p-3 border border-gray-300 rounded-md" placeholder="e.g., Happy to meet you all!">
+      </div>
+      <div class="flex justify-between items-center pt-2">
+        <button type="button" id="join-cancel" class="text-gray-600 hover:underline">Cancel</button>
+        <button type="submit" class="button-gradient text-white py-2 px-6 rounded-md shadow-md">Save & Continue</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Thailand note + Join gating (non-destructive) -->
+<script>
+(function () {
+  // Helpers
+  function $(id){ return document.getElementById(id); }
+  function saveProfile(p){ localStorage.setItem('profileV2', JSON.stringify(p)); }
+  function loadProfile(){ try { return JSON.parse(localStorage.getItem('profileV2') || 'null'); } catch { return null; } }
+
+  /* -------- Thailand note: bigger font, once, Thailand-only -------- */
+  function updateThaiNote() {
+    var note = $('phrases-note');
+    var list = $('essential-phrases-list');
+    if (!note || !list) return;
+    // determine current country (global selectedCountry set by site)
+    try {
+      if (typeof selectedCountry !== 'undefined' && selectedCountry === 'Thailand') {
+        note.textContent = 'Generally, females use "ka" and males use "krap" after some statements or questions to be more polite.';
+        note.classList.remove('hidden');
+      } else {
+        note.textContent = '';
+        note.classList.add('hidden');
+      }
+    } catch (_) {}
+  }
+  document.addEventListener('change', function(e){
+    if (e.target && (e.target.id === 'country-select' || e.target.id === 'essential-phrase-category-select')) {
+      setTimeout(updateThaiNote, 0);
+    }
+  });
+  if (window.MutationObserver && $('essential-phrases-list')) {
+    new MutationObserver(function(){ setTimeout(updateThaiNote, 0); })
+      .observe($('essential-phrases-list'), { childList: true });
+  }
+
+  /* -------- Join UI & gating -------- */
+  var joinBtn = $('join-btn');
+  var overlay = $('join-overlay');
+  var joinForm = $('join-form');
+  var cancelBtn = $('join-cancel');
+  var profileCard = $('profile-card');
+  var profilePhoto = $('profile-photo');
+  var profileUsername = $('profile-username');
+  var profileFrom = $('profile-from');
+  var profileGreeting = $('profile-greeting');
+  var logoutBtn = $('logout-btn');
+
+  var commentForm = $('comment-form');
+  var commentPhoto = $('comment-photo');
+  var commentText = $('comment-text');
+  var commentsDisplay = $('comments-display');
+
+  function openOverlay(){ if (overlay) { overlay.classList.remove('hidden'); overlay.classList.add('flex'); } }
+  function closeOverlay(){ if (overlay) { overlay.classList.add('hidden'); overlay.classList.remove('flex'); } }
+
+  function applyProfileUI(){
+    var p = loadProfile();
+    if (!profileCard) return;
+    if (p) {
+      profileCard.classList.remove('hidden');
+      profileUsername.textContent = p.username || '';
+      profileFrom.textContent = p.from || '';
+      profileGreeting.textContent = p.greeting || '';
+      if (p.photoDataUrl) { profilePhoto.src = p.photoDataUrl; profilePhoto.classList.remove('hidden'); }
+      else { profilePhoto.src = ''; profilePhoto.classList.add('hidden'); }
+    } else {
+      profileCard.classList.add('hidden');
+    }
+  }
+
+  joinBtn && joinBtn.addEventListener('click', openOverlay);
+  cancelBtn && cancelBtn.addEventListener('click', closeOverlay);
+
+  joinForm && joinForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    var username = (document.getElementById('join-username').value || '').trim();
+    var from = (document.getElementById('join-from').value || '').trim();
+    var greeting = (document.getElementById('join-greeting').value || '').trim();
+    var file = document.getElementById('join-photo').files[0];
+    if (!username) { alert('Please enter a username.'); return; }
+    function finish(url){ saveProfile({ username: username, from: from, greeting: greeting, photoDataUrl: url || '' }); closeOverlay(); applyProfileUI(); }
+    if (file) {
+      if (!file.type || file.type.indexOf('image/') !== 0) { alert('Please select an image file.'); return; }
+      var fr = new FileReader();
+      fr.onload = function(){ finish(fr.result); };
+      fr.onerror = function(){ alert('Could not read the selected image.'); };
+      fr.readAsDataURL(file);
+    } else { finish(''); }
+  });
+
+  logoutBtn && logoutBtn.addEventListener('click', function(){
+    localStorage.removeItem('profileV2');
+    applyProfileUI();
+  });
+
+  // Gate the comment form before any existing handler (capture phase)
+  if (commentForm) {
+    commentForm.addEventListener('submit', function(e){
+      var p = loadProfile();
+      if (!p) { e.preventDefault(); e.stopImmediatePropagation(); openOverlay(); return; }
+      var file = commentPhoto && commentPhoto.files ? commentPhoto.files[0] : null;
+      var text = commentText ? (commentText.value || '').trim() : '';
+      if (!file) { e.preventDefault(); e.stopImmediatePropagation(); alert('Please add exactly one picture.'); return; }
+      if (!text) { e.preventDefault(); e.stopImmediatePropagation(); alert('Please add a comment.'); return; }
+      // else let the site's original submission code run.
+    }, true);
+  }
+
+  // Augment new posts with the current user's profile header
+  function augmentCards() {
+    var p = loadProfile();
+    if (!p || !commentsDisplay) return;
+    Array.prototype.forEach.call(commentsDisplay.children, function(card){
+      if (card.getAttribute('data-profile-applied') === '1') return;
+      var header = document.createElement('div');
+      header.className = 'flex items-center mb-2';
+      header.innerHTML =
+        (p.photoDataUrl ? '<img src="'+p.photoDataUrl+'" class="w-10 h-10 rounded-full object-cover border border-gray-300 mr-2" alt="Profile">' : '') +
+        '<div class="text-sm"><div class="font-semibold">'+ (p.username || '') +'</div>' +
+        (p.from ? '<div class="text-gray-600">'+ p.from +'</div>' : '') +
+        (p.greeting ? '<div class="italic text-gray-700">'+ p.greeting +'</div>' : '') + '</div>';
+      card.insertBefore(header, card.firstChild);
+      card.setAttribute('data-profile-applied','1');
+    });
+  }
+  if (window.MutationObserver && commentsDisplay) {
+    new MutationObserver(augmentCards).observe(commentsDisplay, { childList: true });
+  }
+
+  window.addEventListener('DOMContentLoaded', function(){
+    applyProfileUI();
+    updateThaiNote();
+    augmentCards();
+  });
+})();
+</script>
+
 </body>
 </html>
