@@ -1,45 +1,46 @@
-// api/delete.js (Vercel serverless function, Node ESM)
-import { supabase, ADMIN_EMAILS } from './_supabaseClient.js';
+import { adminClient, requireUser } from './_supabaseClient.js';
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
+  if (req.method !== 'DELETE') return res.status(405).json({ error: 'method_not_allowed' });
   try {
-    const auth = req.headers.authorization || '';
-    const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
-    if (!token) return res.status(401).send('Unauthorized');
+    const user = await requireUser(req.headers.authorization || '');
+    if (!user) return res.status(401).json({ error: 'unauthorized' });
 
-    const { data: userData, error: userErr } = await supabase.auth.getUser(token);
-    if (userErr || !userData?.user) return res.status(401).send('Invalid token');
-    const user = userData.user;
+    const id = req.query.id;
+    if (!id) return res.status(400).json({ error: 'missing_id' });
 
-    const { id, image_path } = req.body || {};
-    if (!id) return res.status(400).send('Missing post id');
+    const supa = adminClient();
 
-    // Fetch post
-    const { data: post, error: postErr } = await supabase
-      .from('posts')
-      .select('id,user_id,image_path')
-      .eq('id', id)
-      .single();
+    const { data: post, error: ge } = await supa.from('posts').select('id,user_id,photo_url').eq('id', id).single();
+    if (ge || !post) return res.status(404).json({ error: 'not_found' });
 
-    if (postErr || !post) return res.status(404).send('Post not found');
+    const admins = (process.env.ADMIN_EMAILS || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+    const isAdmin = admins.includes((user.email || '').toLowerCase());
 
-    const isAdmin = user.email && ADMIN_EMAILS.includes(user.email);
-    if (!(isAdmin || post.user_id === user.id)) return res.status(403).send('Forbidden');
+    if (post.user_id !== user.id && !isAdmin) return res.status(403).json({ error: 'forbidden' });
 
-    // Delete DB row
-    const { error: delErr } = await supabase.from('posts').delete().eq('id', id);
-    if (delErr) return res.status(500).send(delErr.message);
+    const { error: de } = await supa.from('posts').delete().eq('id', id);
+    if (de) throw de;
 
-    // Delete image if path provided
-    const path = image_path || post.image_path;
-    if (path) {
-      const { error: imgErr } = await supabase.storage.from('trip-photos').remove([path]);
-      if (imgErr) console.warn('Storage deletion error:', imgErr.message);
-    }
+    try {
+      const url = post.photo_url || '';
+      const publicPrefix = `${process.env.SUPABASE_URL}/storage/v1/object/public/`;
+      if (url.startsWith(publicPrefix)) {
+        const rel = url.slice(publicPrefix.length);
+        const slash = rel.indexOf('/');
+        if (slash !== -1) {
+          const bucket = rel.slice(0, slash);
+          const path = rel.slice(slash + 1);
+          if (bucket) {
+            await supa.storage.from(bucket).remove([path]);
+          }
+        }
+      }
+    } catch (e) {}
 
     res.status(200).json({ ok: true });
   } catch (e) {
-    res.status(500).send(e.message || 'Unexpected error');
+    console.error(e);
+    res.status(500).json({ error: 'delete_failed' });
   }
 }

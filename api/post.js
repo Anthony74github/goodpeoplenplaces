@@ -1,66 +1,24 @@
-// api/post.js (Vercel serverless function, Node ESM)
-import { supabase, ADMIN_EMAILS, hasBadWords } from './_supabaseClient.js';
-
-const RATE_LIMIT_SECONDS = parseInt(process.env.RATE_LIMIT_SECONDS || '30', 10); // per-user
+import { adminClient, requireUser } from './_supabaseClient.js';
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
+  if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
   try {
-    const auth = req.headers.authorization || '';
-    const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
-    if (!token) return res.status(401).send('Unauthorized');
+    const user = await requireUser(req.headers.authorization || '');
+    if (!user) return res.status(401).json({ error: 'unauthorized' });
 
-    const { data: userData, error: userErr } = await supabase.auth.getUser(token);
-    if (userErr || !userData?.user) return res.status(401).send('Invalid token');
-    const user = userData.user;
+    const { country, text, photo_url, name } = req.body || {};
+    if (!photo_url || !text) return res.status(400).json({ error: 'missing_fields' });
 
-    const body = req.body || {};
-    const { country, text, image_url, image_path, username, from, greeting } = body;
-
-    if (!country || !text || !image_url || !image_path || !username) {
-      return res.status(400).send('Missing required fields');
-    }
-    if (hasBadWords(text)) return res.status(400).send('Inappropriate language not allowed');
-    if (!image_path.startsWith(user.id + '/')) return res.status(400).send('Invalid image path');
-
-    // Simple per-user rate limit: ensure last post older than N seconds
-    const { data: lastPosts, error: lastErr } = await supabase
+    const supa = adminClient();
+    const { data, error } = await supa
       .from('posts')
-      .select('created_at')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(1);
-
-    if (lastErr) console.warn('Rate check error', lastErr?.message);
-
-    if (lastPosts && lastPosts.length) {
-      const last = new Date(lastPosts[0].created_at).getTime();
-      if (Date.now() - last < RATE_LIMIT_SECONDS * 1000) {
-        return res.status(429).send('Please wait a bit before posting again.');
-      }
-    }
-
-    const insert = {
-      user_id: user.id,
-      username,
-      country,
-      text,
-      image_url,
-      image_path,
-      from: from || null,
-      greeting: greeting || null
-    };
-
-    const { data, error } = await supabase
-      .from('posts')
-      .insert(insert)
-      .select('id,user_id,username,country,text,image_url,image_path,created_at')
+      .insert([{ user_id: user.id, country: country || '', text, photo_url, name: name || '' }])
+      .select()
       .single();
-
-    if (error) return res.status(500).send(error.message);
-
-    res.status(200).json({ item: data });
+    if (error) throw error;
+    res.status(200).json({ ok: true, post: data });
   } catch (e) {
-    res.status(500).send(e.message || 'Unexpected error');
+    console.error(e);
+    res.status(500).json({ error: 'post_failed' });
   }
 }

@@ -1,24 +1,17 @@
-// api/_supabaseClient.js (Node ESM)
 import { createClient } from '@supabase/supabase-js';
 
-export const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-  { auth: { autoRefreshToken: false, persistSession: false } }
-);
+export function adminClient() {
+  const url = process.env.SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !serviceKey) throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+  return createClient(url, serviceKey, { auth: { persistSession: false } });
+}
 
-export const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '')
-  .split(',')
-  .map(s => s.trim())
-  .filter(Boolean);
-
-// Simple list for bad-word filtering (expand as needed)
-export const BAD_WORDS = (process.env.BAD_WORDS || 'damn,hell')
-  .split(',')
-  .map(s => s.trim().toLowerCase())
-  .filter(Boolean);
-
-export function hasBadWords(text = '') {
-  const t = (text || '').toLowerCase();
-  return BAD_WORDS.some(w => w && t.includes(w));
+export async function requireUser(authHeader) {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+  const token = authHeader.slice(7);
+  const admin = adminClient();
+  const { data: { user }, error } = await admin.auth.getUser(token);
+  if (error) return null;
+  return user;
 }

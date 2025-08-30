@@ -1,32 +1,30 @@
-// api/list.js (Vercel serverless function, Node ESM)
-import { supabase, ADMIN_EMAILS } from './_supabaseClient.js';
+import { adminClient } from './_supabaseClient.js';
 
 export default async function handler(req, res) {
-  if (req.method !== 'GET') return res.status(405).send('Method Not Allowed');
   try {
-    const auth = req.headers.authorization || '';
-    const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
-    let user = null;
-    if (token) {
-      const { data, error } = await supabase.auth.getUser(token);
-      if (!error) user = data.user;
-    }
-
-    const { data, error } = await supabase
+    const supa = adminClient();
+    const { data: posts, error: pe } = await supa
       .from('posts')
-      .select('id,user_id,username,country,text,image_url,image_path,created_at')
+      .select('id,user_id,country,text,photo_url,created_at,name')
       .order('created_at', { ascending: false })
-      .limit(50);
+      .limit(100);
+    if (pe) throw pe;
 
-    if (error) return res.status(500).send(error.message);
-
-    const items = (data || []).map(row => ({
-      ...row,
-      canDelete: !!(user && (user.id === row.user_id || (user.email && ADMIN_EMAILS.includes(user.email))))
-    }));
-
+    const userIds = [...new Set(posts.map(p => p.user_id))];
+    let profiles = [];
+    if (userIds.length) {
+      const { data: profs, error: pf } = await supa
+        .from('profiles')
+        .select('id,username,from,greeting,photo_url')
+        .in('id', userIds);
+      if (pf) throw pf;
+      profiles = profs;
+    }
+    const map = new Map(profiles.map(p => [p.id, p]));
+    const items = posts.map(p => ({ ...p, profile: map.get(p.user_id) || null }));
     res.status(200).json({ items });
   } catch (e) {
-    res.status(500).send(e.message || 'Unexpected error');
+    console.error(e);
+    res.status(500).json({ error: 'list_failed' });
   }
 }
