@@ -91,6 +91,11 @@
             background-position: center;
         }
     </style>
+
+    <!-- Leaflet (for English-labeled basemap) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
 </head>
 <body class="bg-gray-50 text-gray-800">
     <!-- Hero Section with image set via CSS background -->
@@ -193,7 +198,7 @@
                         <!-- Map container now appears on the right side on larger screens. -->
                         <div id="map-container" class="relative w-full md:w-1/2 h-48 md:h-60 bg-blue-50 rounded-lg overflow-hidden order-1 md:order-2">
                             <!-- Replace the static map and marker with an interactive OpenStreetMap embed.  The iframe will be updated via JavaScript when a country is selected. -->
-                            <iframe id="osm-map" class="absolute inset-0 w-full h-full" frameborder="0" scrolling="no" src="" style="border:0;"></iframe>
+                            <div id="osm-map" class="absolute inset-0 w-full h-full"></div>
                         </div>
                     </div>
                 </div>
@@ -249,6 +254,7 @@
                                 <option value="directions">Directions</option>
                             </select>
                             <ul id="essential-phrases-list" class="list-disc list-inside space-y-1 text-gray-700"></ul>
+<p id="phrases-note" class="text-base text-gray-600 mt-2 hidden"></p>
                         </div>
                     </div>
                 </div>
@@ -338,9 +344,9 @@
                     </div>
                     <!-- IP Address Checker Tool -->
                     <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl border border-gray-200 transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl text-center">
-                        <h3 class="text-2xl font-semibold mb-4 text-blue-600">Check My IP Address</h3>
+                        <h3 class="text-2xl font-semibold mb-4 text-blue-600">Your Public IP Address</h3>
                         <button id="get-ip-btn" class="button-gradient text-white py-2 px-6 rounded-md shadow-md hover:scale-105 transition duration-300 mb-4">Get My IP</button>
-                        <p id="ip-address-display" class="text-lg font-medium text-gray-800">Your IP address will appear here.</p>
+                        <p id="ip-address-display" class="text-lg font-medium text-gray-800">Your public IP address will appear here.</p>
                     </div>
                 </div>
             </div>
@@ -446,18 +452,21 @@
         <div class="container mx-auto max-w-6xl">
             <!-- Added handshake emoji to foster a sense of connection and sharing -->
             <h2 class="text-3xl md:text-4xl font-bold mb-8 text-center text-gray-900">Share Your Trip 🤝</h2>
+<div class="flex justify-center mt-4">
+  <button id="join-btn" class="button-gradient text-white py-2 px-6 rounded-md shadow-md hover:scale-105 transition duration-300">Join</button>
+</div>
+<div id="profile-card" class="max-w-md mx-auto mt-4 bg-white rounded-lg shadow border border-gray-200 p-4 hidden">
+  <div class="flex items-center">
+    <img id="profile-photo" class="w-14 h-14 rounded-full object-cover border border-gray-300 mr-3 hidden" alt="Profile">
+    <div>
+      <div id="profile-username" class="font-semibold text-gray-900"></div>
+      <div id="profile-from" class="text-gray-600 text-sm"></div>
+      <div id="profile-greeting" class="text-gray-700 text-sm"></div>
+    </div>
+    <button id="logout-btn" class="ml-auto text-sm text-blue-600 hover:underline">Log out</button>
+  </div>
+</div>
             <p class="text-lg md:text-xl text-gray-700 mb-8 text-center">Upload a photo and tell us about your past or planned travels!</p>
-        <!-- Join control (centered) + small profile display -->
-        <div class="text-center mb-6">
-          <button id="join-btn" class="button-gradient inline-block px-6 py-2 rounded-md shadow-md hover:scale-105 transition duration-300">Join</button>
-        </div>
-        <div id="profile-card" class="max-w-md mx-auto mb-6 hidden text-center">
-          <img id="profile-photo" class="w-16 h-16 rounded-full object-cover mx-auto mb-2 hidden" alt="Profile">
-          <div id="profile-username" class="font-semibold"></div>
-          <div id="profile-from" class="text-sm text-gray-600"></div>
-          <div id="profile-greeting" class="text-sm text-gray-700 italic"></div>
-        </div>
-        
             <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl border border-gray-200 transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl mb-10">
                 <form id="comment-form" class="space-y-4">
                     <div class="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0">
@@ -4007,18 +4016,35 @@
                 // Update the embedded OpenStreetMap iframe.  A bounding box centred on the country
                 // coordinates provides an appropriate zoom level.  The marker parameter pins the
                 // selected destination on the map.  If the iframe element exists, set its src.
-                const mapIframe = document.getElementById('osm-map');
-                if (mapIframe) {
+                
+                // Initialize or update a Leaflet map using an English-labeled basemap.
+                // We use Carto's "light_all" tiles which label places in English.
+                if (!window._leafletMap) {
+                    const el = document.getElementById('osm-map');
+                    if (el) {
+                        window._leafletMap = L.map(el, { zoomControl: true });
+                        window._leafletTileLayer = L.tileLayer(
+                            'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+                            {
+                                attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+                            }
+                        ).addTo(window._leafletMap);
+                        window._leafletMarker = L.marker([0,0]).addTo(window._leafletMap);
+                    }
+                }
+                if (window._leafletMap) {
                     const lat  = geo.lat;
                     const lon  = geo.lon;
-                    const latDiff = 5;
-                    const lonDiff = 5;
-                    const bbox = [
-                        lon - lonDiff, lat - latDiff,
-                        lon + lonDiff, lat + latDiff
-                    ].join(',');
-                    mapIframe.src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lon}`;
+                    // Fit to a loose bounding box around the destination for a similar zoom effect
+                    const latDiff = 5, lonDiff = 5;
+                    const bounds = L.latLngBounds(
+                        [lat - latDiff, lon - lonDiff],
+                        [lat + latDiff, lon + lonDiff]
+                    );
+                    window._leafletMap.fitBounds(bounds);
+                    window._leafletMarker.setLatLng([lat, lon]);
                 }
+
                 // Build the location and climate description inside the shaded box.  Headings remain
                 // centred with extra spacing below, while the text paragraphs are left‑aligned for
                 // readability.
@@ -4058,6 +4084,17 @@
                 categorySelect.value = 'greetings';
             }
             renderEssentialPhrasesForCategory();
+            const phrasesNoteEl = document.getElementById('phrases-note');
+            if (phrasesNoteEl) {
+                if (countryName === 'Thailand') {
+                    phrasesNoteEl.textContent = 'Generally, females use "ka" and males use "krap" after some statements or questions to be more polite.';
+                    phrasesNoteEl.classList.remove('hidden');
+                } else {
+                    phrasesNoteEl.textContent = '';
+                    phrasesNoteEl.classList.add('hidden');
+                }
+            }
+
             // Emergency contacts (display numbers in red) and U.S. Embassy info in purple
             emergencyList.innerHTML = '';
             data.emergencyContacts.forEach(contact => {
@@ -4573,7 +4610,7 @@ function renderEssentialPhrasesForCategory() {
             try {
                 const res = await fetch('https://api.ipify.org?format=json');
                 const data = await res.json();
-                ipAddressDisplay.textContent = `Your IP address: ${data.ip}`;
+                ipAddressDisplay.textContent = `Your public IP address: ${data.ip}`;
             } catch (err) {
                 ipAddressDisplay.textContent = 'Unable to fetch IP.';
             }
@@ -4605,7 +4642,14 @@ function renderEssentialPhrasesForCategory() {
                 html += `<p class="text-sm text-gray-500 mb-1">${country}</p>`;
                 html += `<h4 class="font-semibold text-lg mb-1">${name || 'Anonymous'}</h4>`;
                 html += `<p class="text-gray-700">${text}</p>`;
+                html += `<div class=\"flex justify-end\"><button type=\"button\" class=\"delete-comment-btn text-red-600 text-sm underline mt-3\">Delete</button></div>`;
                 card.innerHTML = html;
+                const delBtn = card.querySelector('.delete-comment-btn');
+                if (delBtn) {
+                    delBtn.addEventListener('click', () => {
+                        if (confirm('Delete this post?')) { card.remove(); }
+                    });
+                }
                 commentsDisplay.prepend(card);
             };
             if (file) {
@@ -4738,6 +4782,17 @@ function renderEssentialPhrasesForCategory() {
             if (essentialPhraseCategorySelect) {
                 essentialPhraseCategorySelect.addEventListener('change', () => {
                     renderEssentialPhrasesForCategory();
+            const phrasesNoteEl = document.getElementById('phrases-note');
+            if (phrasesNoteEl) {
+                if (countryName === 'Thailand') {
+                    phrasesNoteEl.textContent = 'Generally, females use "ka" and males use "krap" after some statements or questions to be more polite.';
+                    phrasesNoteEl.classList.remove('hidden');
+                } else {
+                    phrasesNoteEl.textContent = '';
+                    phrasesNoteEl.classList.add('hidden');
+                }
+            }
+
                 });
             }
 
@@ -4803,5 +4858,242 @@ function renderEssentialPhrasesForCategory() {
             }
         });
     </script>
+
+<!-- Join Modal -->
+<div id="join-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden items-center justify-center">
+  <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl w-[92%] max-w-md">
+    <h3 class="text-xl font-semibold mb-4 text-center text-blue-600">Create Your Profile</h3>
+    <form id="join-form" class="space-y-3">
+      <div>
+        <label class="block text-sm font-semibold mb-1" for="join-photo">Profile Picture</label>
+        <input id="join-photo" type="file" accept="image/*" class="w-full p-2 border border-gray-300 rounded-md">
+      </div>
+      <div>
+        <label class="block text-sm font-semibold mb-1" for="join-username">Username</label>
+        <input id="join-username" type="text" maxlength="30" class="w-full p-3 border border-gray-300 rounded-md" placeholder="e.g. SunnyTraveler" required>
+      </div>
+      <div>
+        <label class="block text-sm font-semibold mb-1" for="join-from">From</label>
+        <input id="join-from" type="text" maxlength="40" class="w-full p-3 border border-gray-300 rounded-md" placeholder="e.g. NYC, USA">
+      </div>
+      <div>
+        <label class="block text-sm font-semibold mb-1" for="join-greeting">Greeting</label>
+        <input id="join-greeting" type="text" maxlength="80" class="w-full p-3 border border-gray-300 rounded-md" placeholder="e.g. Happy to meet you all!">
+      </div>
+      <div class="flex justify-between items-center pt-2">
+        <button type="button" id="join-cancel" class="text-gray-600 hover:underline">Cancel</button>
+        <button type="submit" class="button-gradient text-white py-2 px-6 rounded-md shadow-md">Save & Continue</button>
+      </div>
+    </form>
+  </div>
+</div>
+<!-- Thailand note, storage-safe profile, and persistent posts (non-destructive) -->
+<script>
+(function(){
+  function $(id){ return document.getElementById(id); }
+  function storageAvailable(){
+    try { const k='__tst__'; localStorage.setItem(k,'1'); localStorage.removeItem(k); return true; }
+    catch(e){ return false; }
+  }
+
+  // ---- Thailand note toggle (once; larger font) ----
+  function updateThaiNote(){
+    var note = $('phrases-note'), list = $('essential-phrases-list');
+    if (!note || !list) return;
+    try {
+      if (typeof selectedCountry !== 'undefined' && selectedCountry === 'Thailand') {
+        note.textContent = 'Generally, females use "ka" and males use "krap" after some statements or questions to be more polite.';
+        note.classList.remove('hidden');
+      } else {
+        note.textContent = '';
+        note.classList.add('hidden');
+      }
+    } catch(_) {}
+  }
+  document.addEventListener('change', function(e){
+    if (e.target && (e.target.id === 'country-select' || e.target.id === 'essential-phrase-category-select')) {
+      setTimeout(updateThaiNote, 0);
+    }
+  });
+  if (window.MutationObserver && $('essential-phrases-list')) {
+    new MutationObserver(function(){ setTimeout(updateThaiNote, 0); })
+      .observe($('essential-phrases-list'), { childList: true });
+  }
+
+  // ---- Image compression helpers ----
+  function compressFromFile(file, maxSide, quality){
+    return new Promise(function(resolve, reject){
+      const r = new FileReader();
+      r.onload = function(){ compressFromDataUrl(r.result, maxSide, quality).then(resolve).catch(reject); };
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+  }
+  function compressFromDataUrl(dataUrl, maxSide, quality){
+    return new Promise(function(resolve, reject){
+      const img = new Image();
+      img.onload = function(){
+        let w = img.width, h = img.height;
+        const scale = Math.min(1, maxSide / Math.max(w, h));
+        w = Math.round(w * scale); h = Math.round(h * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        try {
+          const out = canvas.toDataURL('image/jpeg', quality);
+          resolve(out);
+        } catch(e){ reject(e); }
+      };
+      img.onerror = reject;
+      img.src = dataUrl;
+    });
+  }
+
+  // ---- Storage wrappers (handle quota) ----
+  function safeSet(key, value){
+    if (!storageAvailable()) return false;
+    try { localStorage.setItem(key, value); return true; }
+    catch(e){ alert('Storage is full or blocked on this browser. Your profile/posts cannot be saved.'); return false; }
+  }
+  function safeGet(key, fallback){
+    if (!storageAvailable()) return fallback;
+    try { const v = localStorage.getItem(key); return v === null ? fallback : v; } catch(e){ return fallback; }
+  }
+
+  // ---- Profile (Join) ----
+  var joinBtn = $('join-btn');
+  var overlay = $('join-overlay');
+  var joinForm = $('join-form');
+  var cancelBtn = $('join-cancel');
+  var profileCard = $('profile-card');
+  var profilePhoto = $('profile-photo');
+  var profileUsername = $('profile-username');
+  var profileFrom = $('profile-from');
+  var profileGreeting = $('profile-greeting');
+  var logoutBtn = $('logout-btn');
+
+  function loadProfile(){
+    try { return JSON.parse(safeGet('profileV3','null')); } catch(_){ return null; }
+  }
+  function applyProfileUI(){
+    var p = loadProfile();
+    if (!profileCard) return;
+    if (p){
+      profileCard.classList.remove('hidden');
+      if (profileUsername) profileUsername.textContent = p.username || '';
+      if (profileFrom) profileFrom.textContent = p.from || '';
+      if (profileGreeting) profileGreeting.textContent = p.greeting || '';
+      if (profilePhoto){
+        if (p.photoDataUrl){ profilePhoto.src = p.photoDataUrl; profilePhoto.classList.remove('hidden'); }
+        else { profilePhoto.src = ''; profilePhoto.classList.add('hidden'); }
+      }
+    } else {
+      profileCard.classList.add('hidden');
+    }
+  }
+  function openOverlay(){ if (overlay){ overlay.classList.remove('hidden'); overlay.classList.add('flex'); } }
+  function closeOverlay(){ if (overlay){ overlay.classList.add('hidden'); overlay.classList.remove('flex'); } }
+
+  joinBtn && joinBtn.addEventListener('click', openOverlay);
+  cancelBtn && cancelBtn.addEventListener('click', closeOverlay);
+
+  joinForm && joinForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    var username = (document.getElementById('join-username').value || '').trim();
+    var from = (document.getElementById('join-from').value || '').trim();
+    var greeting = (document.getElementById('join-greeting').value || '').trim();
+    var file = document.getElementById('join-photo').files[0];
+    if (!username){ alert('Please enter a username.'); return; }
+    function finish(photoUrl){
+      var ok = safeSet('profileV3', JSON.stringify({ username: username, from: from, greeting: greeting, photoDataUrl: photoUrl || '' }));
+      if (ok){ closeOverlay(); applyProfileUI(); }
+    }
+    if (file){
+      if (!file.type || file.type.indexOf('image/') !== 0){ alert('Please select an image file.'); return; }
+      compressFromFile(file, 256, 0.8).then(finish).catch(function(){ alert('Could not process the selected image.'); });
+    } else {
+      finish('');
+    }
+  });
+
+  logoutBtn && logoutBtn.addEventListener('click', function(){
+    if (storageAvailable()) try { localStorage.removeItem('profileV3'); } catch(_){}
+    applyProfileUI();
+  });
+
+  // ---- Posts persistence (per-device) ----
+  var commentForm = $('comment-form');
+  var commentName = $('comment-name');
+  var commentCountrySelect = $('comment-country');
+  var commentPhoto = $('comment-photo');
+  var commentText = $('comment-text');
+  var commentsDisplay = $('comments-display');
+
+  function readPosts(){ try { return JSON.parse(safeGet('tripPostsV1','[]')) || []; } catch(_){ return []; } }
+  function writePosts(items){ safeSet('tripPostsV1', JSON.stringify(items)); }
+  function renderStoredPosts(){
+    var items = readPosts().sort(function(a,b){ return b.ts - a.ts; });
+    if (!commentsDisplay) return;
+    items.forEach(function(p){
+      var card = document.createElement('div');
+      card.className = 'p-4 bg-white rounded-lg shadow-xl border border-gray-200 transform transition duration-300 hover:-translate-y-1 hover:shadow-2xl';
+      var html = '';
+      if (p.photoDataUrl) html += '<img src="'+p.photoDataUrl+'" alt="User uploaded photo" class="w-full h-48 object-cover rounded mb-3">';
+      html += '<p class="text-sm text-gray-500 mb-1">'+ (p.country || '') +'</p>';
+      html += '<h4 class="font-semibold text-lg mb-1">'+ (p.name || 'Anonymous') +'</h4>';
+      html += '<p class="text-gray-700">'+ (p.text || '') +'</p>';
+      html += '<div class="flex justify-end"><button class="delete-comment-btn text-red-600 text-sm underline mt-3">Delete</button></div>';
+      card.innerHTML = html;
+      var delBtn = card.querySelector('.delete-comment-btn');
+      delBtn && delBtn.addEventListener('click', function(){
+        if (confirm('Delete this post?')){
+          var items = readPosts().filter(function(x){ return x.id !== p.id; });
+          writePosts(items);
+          card.remove();
+        }
+      });
+      commentsDisplay.appendChild(card);
+    });
+  }
+
+  // Intercept submit (capture): ensure joined + compress + save to storage after UI card is added
+  if (commentForm){
+    commentForm.addEventListener('submit', function(e){
+      var prof = loadProfile();
+      if (!prof){ e.preventDefault(); e.stopImmediatePropagation(); openOverlay(); return; }
+      var file = commentPhoto && commentPhoto.files ? commentPhoto.files[0] : null;
+      var text = commentText ? (commentText.value || '').trim() : '';
+      if (!file){ e.preventDefault(); e.stopImmediatePropagation(); alert('Please add exactly one picture.'); return; }
+      if (!text){ e.preventDefault(); e.stopImmediatePropagation(); alert('Please add a comment.'); return; }
+
+      setTimeout(function(){
+        var save = function(imgDataUrl){
+          var post = {
+            id: Date.now(),
+            name: (commentName && commentName.value) ? commentName.value.trim() : (prof.username || 'Anonymous'),
+            country: commentCountrySelect ? commentCountrySelect.value : '',
+            text: text,
+            photoDataUrl: imgDataUrl || '',
+            ts: Date.now()
+          };
+          var items = readPosts(); items.push(post); writePosts(items);
+        };
+        if (file){
+          compressFromFile(file, 1024, 0.75).then(save).catch(function(){});
+        } else {
+          save('');
+        }
+      }, 0);
+    }, true);
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    renderStoredPosts();
+    applyProfileUI();
+    setTimeout(updateThaiNote, 0);
+  });
+})();
+</script>
 </body>
 </html>
