@@ -91,6 +91,11 @@
             background-position: center;
         }
     </style>
+
+    <!-- Leaflet (for English-labeled basemap) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
 </head>
 <body class="bg-gray-50 text-gray-800">
     <!-- Hero Section with image set via CSS background -->
@@ -193,7 +198,7 @@
                         <!-- Map container now appears on the right side on larger screens. -->
                         <div id="map-container" class="relative w-full md:w-1/2 h-48 md:h-60 bg-blue-50 rounded-lg overflow-hidden order-1 md:order-2">
                             <!-- Replace the static map and marker with an interactive OpenStreetMap embed.  The iframe will be updated via JavaScript when a country is selected. -->
-                            <iframe id="osm-map" class="absolute inset-0 w-full h-full" frameborder="0" scrolling="no" src="" style="border:0;"></iframe>
+                            <div id="osm-map" class="absolute inset-0 w-full h-full"></div>
                         </div>
                     </div>
                 </div>
@@ -339,9 +344,9 @@
                     </div>
                     <!-- IP Address Checker Tool -->
                     <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl border border-gray-200 transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl text-center">
-                        <h3 class="text-2xl font-semibold mb-4 text-blue-600">Check My IP Address</h3>
+                        <h3 class="text-2xl font-semibold mb-4 text-blue-600">Your Public IP Address</h3>
                         <button id="get-ip-btn" class="button-gradient text-white py-2 px-6 rounded-md shadow-md hover:scale-105 transition duration-300 mb-4">Get My IP</button>
-                        <p id="ip-address-display" class="text-lg font-medium text-gray-800">Your IP address will appear here.</p>
+                        <p id="ip-address-display" class="text-lg font-medium text-gray-800">Your public IP address will appear here.</p>
                     </div>
                 </div>
             </div>
@@ -446,20 +451,21 @@
     <section id="comments-section" class="py-16 px-4 md:px-6 bg-blue-50">
         <div class="container mx-auto max-w-6xl">
             <!-- Added handshake emoji to foster a sense of connection and sharing -->
-            <h2 class="text-3xl md:text-4xl font-bold mb-8 text-center text-gray-900">Share Your Trip 🤝</h2>
+            \1
+<!-- Join button & profile card (non-destructive, added under Share Your Trip heading) -->
 <div class="flex justify-center mt-4">
-  <button id="join-btn" class="button-gradient text-white py-2 px-6 rounded-md shadow-md hover:scale-105 transition duration-300">
-    Join
-  </button>
+  <button id="join-btn" class="button-gradient text-white py-2 px-6 rounded-md shadow-md">Join</button>
 </div>
-<div id="profile-card" class="mt-4 flex flex-col items-center hidden">
-  <img id="profile-photo" class="w-20 h-20 rounded-full object-cover border border-gray-300 shadow-sm" alt="Profile">
-  <div class="text-center mt-2 text-sm text-gray-800">
-    <div id="profile-username" class="font-semibold"></div>
-    <div id="profile-from" class="text-gray-600"></div>
-    <div id="profile-greeting" class="italic text-gray-700"></div>
+<div id="profile-card" class="max-w-md mx-auto mt-4 bg-white rounded-lg shadow border border-gray-200 p-4 hidden">
+  <div class="flex items-center">
+    <img id="profile-photo" class="w-14 h-14 rounded-full object-cover border border-gray-300 mr-3 hidden" alt="Profile">
+    <div>
+      <div id="profile-username" class="font-semibold text-gray-900"></div>
+      <div id="profile-from" class="text-gray-600 text-sm"></div>
+      <div id="profile-greeting" class="text-gray-700 text-sm"></div>
+    </div>
+    <button id="logout-btn" class="ml-auto text-sm text-blue-600 hover:underline">Log out</button>
   </div>
-  <button id="logout-btn" class="mt-2 text-blue-600 hover:underline text-sm">Log out</button>
 </div>
             <p class="text-lg md:text-xl text-gray-700 mb-8 text-center">Upload a photo and tell us about your past or planned travels!</p>
             <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl border border-gray-200 transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl mb-10">
@@ -4011,18 +4017,35 @@
                 // Update the embedded OpenStreetMap iframe.  A bounding box centred on the country
                 // coordinates provides an appropriate zoom level.  The marker parameter pins the
                 // selected destination on the map.  If the iframe element exists, set its src.
-                const mapIframe = document.getElementById('osm-map');
-                if (mapIframe) {
+                
+                // Initialize or update a Leaflet map using an English-labeled basemap.
+                // We use Carto's "light_all" tiles which label places in English.
+                if (!window._leafletMap) {
+                    const el = document.getElementById('osm-map');
+                    if (el) {
+                        window._leafletMap = L.map(el, { zoomControl: true });
+                        window._leafletTileLayer = L.tileLayer(
+                            'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+                            {
+                                attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+                            }
+                        ).addTo(window._leafletMap);
+                        window._leafletMarker = L.marker([0,0]).addTo(window._leafletMap);
+                    }
+                }
+                if (window._leafletMap) {
                     const lat  = geo.lat;
                     const lon  = geo.lon;
-                    const latDiff = 5;
-                    const lonDiff = 5;
-                    const bbox = [
-                        lon - lonDiff, lat - latDiff,
-                        lon + lonDiff, lat + latDiff
-                    ].join(',');
-                    mapIframe.src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lon}`;
+                    // Fit to a loose bounding box around the destination for a similar zoom effect
+                    const latDiff = 5, lonDiff = 5;
+                    const bounds = L.latLngBounds(
+                        [lat - latDiff, lon - lonDiff],
+                        [lat + latDiff, lon + lonDiff]
+                    );
+                    window._leafletMap.fitBounds(bounds);
+                    window._leafletMarker.setLatLng([lat, lon]);
                 }
+
                 // Build the location and climate description inside the shaded box.  Headings remain
                 // centred with extra spacing below, while the text paragraphs are left‑aligned for
                 // readability.
@@ -4062,6 +4085,17 @@
                 categorySelect.value = 'greetings';
             }
             renderEssentialPhrasesForCategory();
+            const phrasesNoteEl = document.getElementById('phrases-note');
+            if (phrasesNoteEl) {
+                if (countryName === 'Thailand') {
+                    phrasesNoteEl.textContent = 'Generally, females use "ka" and males use "krap" after some statements or questions to be more polite.';
+                    phrasesNoteEl.classList.remove('hidden');
+                } else {
+                    phrasesNoteEl.textContent = '';
+                    phrasesNoteEl.classList.add('hidden');
+                }
+            }
+
             // Emergency contacts (display numbers in red) and U.S. Embassy info in purple
             emergencyList.innerHTML = '';
             data.emergencyContacts.forEach(contact => {
@@ -4577,7 +4611,7 @@ function renderEssentialPhrasesForCategory() {
             try {
                 const res = await fetch('https://api.ipify.org?format=json');
                 const data = await res.json();
-                ipAddressDisplay.textContent = `Your IP address: ${data.ip}`;
+                ipAddressDisplay.textContent = `Your public IP address: ${data.ip}`;
             } catch (err) {
                 ipAddressDisplay.textContent = 'Unable to fetch IP.';
             }
@@ -4609,7 +4643,14 @@ function renderEssentialPhrasesForCategory() {
                 html += `<p class="text-sm text-gray-500 mb-1">${country}</p>`;
                 html += `<h4 class="font-semibold text-lg mb-1">${name || 'Anonymous'}</h4>`;
                 html += `<p class="text-gray-700">${text}</p>`;
+                html += `<div class=\"flex justify-end\"><button type=\"button\" class=\"delete-comment-btn text-red-600 text-sm underline mt-3\">Delete</button></div>`;
                 card.innerHTML = html;
+                const delBtn = card.querySelector('.delete-comment-btn');
+                if (delBtn) {
+                    delBtn.addEventListener('click', () => {
+                        if (confirm('Delete this post?')) { card.remove(); }
+                    });
+                }
                 commentsDisplay.prepend(card);
             };
             if (file) {
@@ -4742,6 +4783,17 @@ function renderEssentialPhrasesForCategory() {
             if (essentialPhraseCategorySelect) {
                 essentialPhraseCategorySelect.addEventListener('change', () => {
                     renderEssentialPhrasesForCategory();
+            const phrasesNoteEl = document.getElementById('phrases-note');
+            if (phrasesNoteEl) {
+                if (countryName === 'Thailand') {
+                    phrasesNoteEl.textContent = 'Generally, females use "ka" and males use "krap" after some statements or questions to be more polite.';
+                    phrasesNoteEl.classList.remove('hidden');
+                } else {
+                    phrasesNoteEl.textContent = '';
+                    phrasesNoteEl.classList.add('hidden');
+                }
+            }
+
                 });
             }
 
@@ -4770,7 +4822,8 @@ function renderEssentialPhrasesForCategory() {
                     // Insert a line break after each label to ensure items appear on separate lines in the downloaded file
                     let content = packingListEditable.innerHTML;
                     content = content.replace(/<\/label>/g, '</label><br>');
-                    const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Packing List</title></head><body>${content}<!-- Join Modal -->
+                    const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Packing List</title></head><body>${content}
+<!-- Join Modal -->
 <div id="join-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden items-center justify-center">
   <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl w-[92%] max-w-md">
     <h3 class="text-xl font-semibold mb-4 text-center text-blue-600">Create Your Profile</h3>
@@ -4781,15 +4834,15 @@ function renderEssentialPhrasesForCategory() {
       </div>
       <div>
         <label class="block text-sm font-semibold mb-1" for="join-username">Username</label>
-        <input id="join-username" type="text" maxlength="30" class="w-full p-3 border border-gray-300 rounded-md" placeholder="e.g., SunnyTraveler" required>
+        <input id="join-username" type="text" maxlength="30" class="w-full p-3 border border-gray-300 rounded-md" placeholder="e.g. SunnyTraveler" required>
       </div>
       <div>
         <label class="block text-sm font-semibold mb-1" for="join-from">From</label>
-        <input id="join-from" type="text" maxlength="40" class="w-full p-3 border border-gray-300 rounded-md" placeholder="e.g., NYC, USA">
+        <input id="join-from" type="text" maxlength="40" class="w-full p-3 border border-gray-300 rounded-md" placeholder="e.g. NYC, USA">
       </div>
       <div>
         <label class="block text-sm font-semibold mb-1" for="join-greeting">Greeting</label>
-        <input id="join-greeting" type="text" maxlength="80" class="w-full p-3 border border-gray-300 rounded-md" placeholder="e.g., Happy to meet you all!">
+        <input id="join-greeting" type="text" maxlength="80" class="w-full p-3 border border-gray-300 rounded-md" placeholder="e.g. Happy to meet you all!">
       </div>
       <div class="flex justify-between items-center pt-2">
         <button type="button" id="join-cancel" class="text-gray-600 hover:underline">Cancel</button>
@@ -4798,42 +4851,13 @@ function renderEssentialPhrasesForCategory() {
     </form>
   </div>
 </div>
-
-<!-- Thailand note + Join gating (non-destructive) -->
+<!-- Join gating & profile header injection -->
 <script>
-(function () {
-  // Helpers
+(function(){
   function $(id){ return document.getElementById(id); }
-  function saveProfile(p){ localStorage.setItem('profileV2', JSON.stringify(p)); }
-  function loadProfile(){ try { return JSON.parse(localStorage.getItem('profileV2') || 'null'); } catch { return null; } }
+  function saveProfile(p){ try { localStorage.setItem('profileV2', JSON.stringify(p)); } catch(_){} }
+  function loadProfile(){ try { return JSON.parse(localStorage.getItem('profileV2') || 'null'); } catch(_) { return null; } }
 
-  /* -------- Thailand note: bigger font, once, Thailand-only -------- */
-  function updateThaiNote() {
-    var note = $('phrases-note');
-    var list = $('essential-phrases-list');
-    if (!note || !list) return;
-    // determine current country (global selectedCountry set by site)
-    try {
-      if (typeof selectedCountry !== 'undefined' && selectedCountry === 'Thailand') {
-        note.textContent = 'Generally, females use "ka" and males use "krap" after some statements or questions to be more polite.';
-        note.classList.remove('hidden');
-      } else {
-        note.textContent = '';
-        note.classList.add('hidden');
-      }
-    } catch (_) {}
-  }
-  document.addEventListener('change', function(e){
-    if (e.target && (e.target.id === 'country-select' || e.target.id === 'essential-phrase-category-select')) {
-      setTimeout(updateThaiNote, 0);
-    }
-  });
-  if (window.MutationObserver && $('essential-phrases-list')) {
-    new MutationObserver(function(){ setTimeout(updateThaiNote, 0); })
-      .observe($('essential-phrases-list'), { childList: true });
-  }
-
-  /* -------- Join UI & gating -------- */
   var joinBtn = $('join-btn');
   var overlay = $('join-overlay');
   var joinForm = $('join-form');
@@ -4850,42 +4874,53 @@ function renderEssentialPhrasesForCategory() {
   var commentText = $('comment-text');
   var commentsDisplay = $('comments-display');
 
-  function openOverlay(){ if (overlay) { overlay.classList.remove('hidden'); overlay.classList.add('flex'); } }
-  function closeOverlay(){ if (overlay) { overlay.classList.add('hidden'); overlay.classList.remove('flex'); } }
+  function openOverlay(){ if (overlay){ overlay.classList.remove('hidden'); overlay.classList.add('flex'); } }
+  function closeOverlay(){ if (overlay){ overlay.classList.add('hidden'); overlay.classList.remove('flex'); } }
 
   function applyProfileUI(){
     var p = loadProfile();
     if (!profileCard) return;
-    if (p) {
+    if (p){
       profileCard.classList.remove('hidden');
-      profileUsername.textContent = p.username || '';
-      profileFrom.textContent = p.from || '';
-      profileGreeting.textContent = p.greeting || '';
-      if (p.photoDataUrl) { profilePhoto.src = p.photoDataUrl; profilePhoto.classList.remove('hidden'); }
-      else { profilePhoto.src = ''; profilePhoto.classList.add('hidden'); }
+      profileUsername && (profileUsername.textContent = p.username || '');
+      profileFrom && (profileFrom.textContent = p.from || '');
+      profileGreeting && (profileGreeting.textContent = p.greeting || '');
+      if (p.photoDataUrl){
+        profilePhoto && (profilePhoto.src = p.photoDataUrl);
+        profilePhoto && profilePhoto.classList.remove('hidden');
+      } else {
+        if (profilePhoto){ profilePhoto.src = ''; profilePhoto.classList.add('hidden'); }
+      }
     } else {
       profileCard.classList.add('hidden');
     }
   }
 
+  // Button + form handlers
   joinBtn && joinBtn.addEventListener('click', openOverlay);
   cancelBtn && cancelBtn.addEventListener('click', closeOverlay);
-
   joinForm && joinForm.addEventListener('submit', function(e){
     e.preventDefault();
     var username = (document.getElementById('join-username').value || '').trim();
     var from = (document.getElementById('join-from').value || '').trim();
     var greeting = (document.getElementById('join-greeting').value || '').trim();
     var file = document.getElementById('join-photo').files[0];
-    if (!username) { alert('Please enter a username.'); return; }
-    function finish(url){ saveProfile({ username: username, from: from, greeting: greeting, photoDataUrl: url || '' }); closeOverlay(); applyProfileUI(); }
-    if (file) {
-      if (!file.type || file.type.indexOf('image/') !== 0) { alert('Please select an image file.'); return; }
+    if (!username){ alert('Please enter a username.'); return; }
+
+    function finish(url){
+      saveProfile({ username: username, from: from, greeting: greeting, photoDataUrl: url || '' });
+      closeOverlay();
+      applyProfileUI();
+    }
+    if (file){
+      if (!file.type || file.type.indexOf('image/') !== 0){ alert('Please select an image file.'); return; }
       var fr = new FileReader();
       fr.onload = function(){ finish(fr.result); };
       fr.onerror = function(){ alert('Could not read the selected image.'); };
       fr.readAsDataURL(file);
-    } else { finish(''); }
+    } else {
+      finish('');
+    }
   });
 
   logoutBtn && logoutBtn.addEventListener('click', function(){
@@ -4893,21 +4928,33 @@ function renderEssentialPhrasesForCategory() {
     applyProfileUI();
   });
 
-  // Gate the comment form before any existing handler (capture phase)
-  if (commentForm) {
+  // Gate posting: must be joined; enforce 1 image + 1 non-empty comment
+  if (commentForm){
     commentForm.addEventListener('submit', function(e){
       var p = loadProfile();
-      if (!p) { e.preventDefault(); e.stopImmediatePropagation(); openOverlay(); return; }
+      if (!p){
+        e.preventDefault(); e.stopImmediatePropagation();
+        openOverlay();
+        return;
+      }
       var file = commentPhoto && commentPhoto.files ? commentPhoto.files[0] : null;
       var text = commentText ? (commentText.value || '').trim() : '';
-      if (!file) { e.preventDefault(); e.stopImmediatePropagation(); alert('Please add exactly one picture.'); return; }
-      if (!text) { e.preventDefault(); e.stopImmediatePropagation(); alert('Please add a comment.'); return; }
-      // else let the site's original submission code run.
+      if (!file){
+        e.preventDefault(); e.stopImmediatePropagation();
+        alert('Please add exactly one picture.');
+        return;
+      }
+      if (!text){
+        e.preventDefault(); e.stopImmediatePropagation();
+        alert('Please add a comment.');
+        return;
+      }
+      // else allow the page's original submit handler to run
     }, true);
   }
 
-  // Augment new posts with the current user's profile header
-  function augmentCards() {
+  // Add user's profile header to newly created post cards (idempotent)
+  function augmentCards(){
     var p = loadProfile();
     if (!p || !commentsDisplay) return;
     Array.prototype.forEach.call(commentsDisplay.children, function(card){
@@ -4918,23 +4965,24 @@ function renderEssentialPhrasesForCategory() {
         (p.photoDataUrl ? '<img src="'+p.photoDataUrl+'" class="w-10 h-10 rounded-full object-cover border border-gray-300 mr-2" alt="Profile">' : '') +
         '<div class="text-sm"><div class="font-semibold">'+ (p.username || '') +'</div>' +
         (p.from ? '<div class="text-gray-600">'+ p.from +'</div>' : '') +
-        (p.greeting ? '<div class="italic text-gray-700">'+ p.greeting +'</div>' : '') + '</div>';
+        (p.greeting ? '<div class="text-gray-700">'+ p.greeting +'</div>' : '') +
+        '</div>';
       card.insertBefore(header, card.firstChild);
-      card.setAttribute('data-profile-applied','1');
+      card.setAttribute('data-profile-applied', '1');
     });
   }
-  if (window.MutationObserver && commentsDisplay) {
-    new MutationObserver(augmentCards).observe(commentsDisplay, { childList: true });
-  }
 
-  window.addEventListener('DOMContentLoaded', function(){
+  var mo;
+  if (window.MutationObserver && commentsDisplay){
+    mo = new MutationObserver(function(){ augmentCards(); });
+    mo.observe(commentsDisplay, { childList: true });
+  }
+  document.addEventListener('DOMContentLoaded', function(){
     applyProfileUI();
-    updateThaiNote();
-    augmentCards();
+    setTimeout(augmentCards, 0);
   });
 })();
 </script>
-
 </body></html>`;
                     const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
                     const url = URL.createObjectURL(blob);
@@ -4972,170 +5020,5 @@ function renderEssentialPhrasesForCategory() {
             }
         });
     </script>
-<!-- Join Modal -->
-<div id="join-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden items-center justify-center">
-  <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl w-[92%] max-w-md">
-    <h3 class="text-xl font-semibold mb-4 text-center text-blue-600">Create Your Profile</h3>
-    <form id="join-form" class="space-y-3">
-      <div>
-        <label class="block text-sm font-semibold mb-1" for="join-photo">Profile Picture</label>
-        <input id="join-photo" type="file" accept="image/*" class="w-full p-2 border border-gray-300 rounded-md">
-      </div>
-      <div>
-        <label class="block text-sm font-semibold mb-1" for="join-username">Username</label>
-        <input id="join-username" type="text" maxlength="30" class="w-full p-3 border border-gray-300 rounded-md" placeholder="e.g., SunnyTraveler" required>
-      </div>
-      <div>
-        <label class="block text-sm font-semibold mb-1" for="join-from">From</label>
-        <input id="join-from" type="text" maxlength="40" class="w-full p-3 border border-gray-300 rounded-md" placeholder="e.g., NYC, USA">
-      </div>
-      <div>
-        <label class="block text-sm font-semibold mb-1" for="join-greeting">Greeting</label>
-        <input id="join-greeting" type="text" maxlength="80" class="w-full p-3 border border-gray-300 rounded-md" placeholder="e.g., Happy to meet you all!">
-      </div>
-      <div class="flex justify-between items-center pt-2">
-        <button type="button" id="join-cancel" class="text-gray-600 hover:underline">Cancel</button>
-        <button type="submit" class="button-gradient text-white py-2 px-6 rounded-md shadow-md">Save & Continue</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- Thailand note + Join gating (non-destructive) -->
-<script>
-(function () {
-  // Helpers
-  function $(id){ return document.getElementById(id); }
-  function saveProfile(p){ localStorage.setItem('profileV2', JSON.stringify(p)); }
-  function loadProfile(){ try { return JSON.parse(localStorage.getItem('profileV2') || 'null'); } catch { return null; } }
-
-  /* -------- Thailand note: bigger font, once, Thailand-only -------- */
-  function updateThaiNote() {
-    var note = $('phrases-note');
-    var list = $('essential-phrases-list');
-    if (!note || !list) return;
-    // determine current country (global selectedCountry set by site)
-    try {
-      if (typeof selectedCountry !== 'undefined' && selectedCountry === 'Thailand') {
-        note.textContent = 'Generally, females use "ka" and males use "krap" after some statements or questions to be more polite.';
-        note.classList.remove('hidden');
-      } else {
-        note.textContent = '';
-        note.classList.add('hidden');
-      }
-    } catch (_) {}
-  }
-  document.addEventListener('change', function(e){
-    if (e.target && (e.target.id === 'country-select' || e.target.id === 'essential-phrase-category-select')) {
-      setTimeout(updateThaiNote, 0);
-    }
-  });
-  if (window.MutationObserver && $('essential-phrases-list')) {
-    new MutationObserver(function(){ setTimeout(updateThaiNote, 0); })
-      .observe($('essential-phrases-list'), { childList: true });
-  }
-
-  /* -------- Join UI & gating -------- */
-  var joinBtn = $('join-btn');
-  var overlay = $('join-overlay');
-  var joinForm = $('join-form');
-  var cancelBtn = $('join-cancel');
-  var profileCard = $('profile-card');
-  var profilePhoto = $('profile-photo');
-  var profileUsername = $('profile-username');
-  var profileFrom = $('profile-from');
-  var profileGreeting = $('profile-greeting');
-  var logoutBtn = $('logout-btn');
-
-  var commentForm = $('comment-form');
-  var commentPhoto = $('comment-photo');
-  var commentText = $('comment-text');
-  var commentsDisplay = $('comments-display');
-
-  function openOverlay(){ if (overlay) { overlay.classList.remove('hidden'); overlay.classList.add('flex'); } }
-  function closeOverlay(){ if (overlay) { overlay.classList.add('hidden'); overlay.classList.remove('flex'); } }
-
-  function applyProfileUI(){
-    var p = loadProfile();
-    if (!profileCard) return;
-    if (p) {
-      profileCard.classList.remove('hidden');
-      profileUsername.textContent = p.username || '';
-      profileFrom.textContent = p.from || '';
-      profileGreeting.textContent = p.greeting || '';
-      if (p.photoDataUrl) { profilePhoto.src = p.photoDataUrl; profilePhoto.classList.remove('hidden'); }
-      else { profilePhoto.src = ''; profilePhoto.classList.add('hidden'); }
-    } else {
-      profileCard.classList.add('hidden');
-    }
-  }
-
-  joinBtn && joinBtn.addEventListener('click', openOverlay);
-  cancelBtn && cancelBtn.addEventListener('click', closeOverlay);
-
-  joinForm && joinForm.addEventListener('submit', function(e){
-    e.preventDefault();
-    var username = (document.getElementById('join-username').value || '').trim();
-    var from = (document.getElementById('join-from').value || '').trim();
-    var greeting = (document.getElementById('join-greeting').value || '').trim();
-    var file = document.getElementById('join-photo').files[0];
-    if (!username) { alert('Please enter a username.'); return; }
-    function finish(url){ saveProfile({ username: username, from: from, greeting: greeting, photoDataUrl: url || '' }); closeOverlay(); applyProfileUI(); }
-    if (file) {
-      if (!file.type || file.type.indexOf('image/') !== 0) { alert('Please select an image file.'); return; }
-      var fr = new FileReader();
-      fr.onload = function(){ finish(fr.result); };
-      fr.onerror = function(){ alert('Could not read the selected image.'); };
-      fr.readAsDataURL(file);
-    } else { finish(''); }
-  });
-
-  logoutBtn && logoutBtn.addEventListener('click', function(){
-    localStorage.removeItem('profileV2');
-    applyProfileUI();
-  });
-
-  // Gate the comment form before any existing handler (capture phase)
-  if (commentForm) {
-    commentForm.addEventListener('submit', function(e){
-      var p = loadProfile();
-      if (!p) { e.preventDefault(); e.stopImmediatePropagation(); openOverlay(); return; }
-      var file = commentPhoto && commentPhoto.files ? commentPhoto.files[0] : null;
-      var text = commentText ? (commentText.value || '').trim() : '';
-      if (!file) { e.preventDefault(); e.stopImmediatePropagation(); alert('Please add exactly one picture.'); return; }
-      if (!text) { e.preventDefault(); e.stopImmediatePropagation(); alert('Please add a comment.'); return; }
-      // else let the site's original submission code run.
-    }, true);
-  }
-
-  // Augment new posts with the current user's profile header
-  function augmentCards() {
-    var p = loadProfile();
-    if (!p || !commentsDisplay) return;
-    Array.prototype.forEach.call(commentsDisplay.children, function(card){
-      if (card.getAttribute('data-profile-applied') === '1') return;
-      var header = document.createElement('div');
-      header.className = 'flex items-center mb-2';
-      header.innerHTML =
-        (p.photoDataUrl ? '<img src="'+p.photoDataUrl+'" class="w-10 h-10 rounded-full object-cover border border-gray-300 mr-2" alt="Profile">' : '') +
-        '<div class="text-sm"><div class="font-semibold">'+ (p.username || '') +'</div>' +
-        (p.from ? '<div class="text-gray-600">'+ p.from +'</div>' : '') +
-        (p.greeting ? '<div class="italic text-gray-700">'+ p.greeting +'</div>' : '') + '</div>';
-      card.insertBefore(header, card.firstChild);
-      card.setAttribute('data-profile-applied','1');
-    });
-  }
-  if (window.MutationObserver && commentsDisplay) {
-    new MutationObserver(augmentCards).observe(commentsDisplay, { childList: true });
-  }
-
-  window.addEventListener('DOMContentLoaded', function(){
-    applyProfileUI();
-    updateThaiNote();
-    augmentCards();
-  });
-})();
-</script>
-
 </body>
 </html>
