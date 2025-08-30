@@ -4887,10 +4887,16 @@ function renderEssentialPhrasesForCategory() {
     </form>
   </div>
 </div>
-<!-- Thailand note show/hide (once; larger font) -->
+<!-- Thailand note, storage-safe profile, and persistent posts (non-destructive) -->
 <script>
 (function(){
   function $(id){ return document.getElementById(id); }
+  function storageAvailable(){
+    try { const k='__tst__'; localStorage.setItem(k,'1'); localStorage.removeItem(k); return true; }
+    catch(e){ return false; }
+  }
+
+  // ---- Thailand note toggle (once; larger font) ----
   function updateThaiNote(){
     var note = $('phrases-note'), list = $('essential-phrases-list');
     if (!note || !list) return;
@@ -4902,27 +4908,60 @@ function renderEssentialPhrasesForCategory() {
         note.textContent = '';
         note.classList.add('hidden');
       }
-    } catch (_) {}
+    } catch(_) {}
   }
   document.addEventListener('change', function(e){
     if (e.target && (e.target.id === 'country-select' || e.target.id === 'essential-phrase-category-select')) {
       setTimeout(updateThaiNote, 0);
     }
   });
-  if (window.MutationObserver && document.getElementById('essential-phrases-list')) {
+  if (window.MutationObserver && $('essential-phrases-list')) {
     new MutationObserver(function(){ setTimeout(updateThaiNote, 0); })
-      .observe(document.getElementById('essential-phrases-list'), { childList: true });
+      .observe($('essential-phrases-list'), { childList: true });
   }
-  window.addEventListener('DOMContentLoaded', function(){ setTimeout(updateThaiNote, 0); });
-})();
-</script>
-<!-- Join gating & profile header injection -->
-<script>
-(function(){
-  function $(id){ return document.getElementById(id); }
-  function saveProfile(p){ try { localStorage.setItem('profileV2', JSON.stringify(p)); } catch(_){} }
-  function loadProfile(){ try { return JSON.parse(localStorage.getItem('profileV2') || 'null'); } catch(_) { return null; } }
 
+  // ---- Image compression helpers ----
+  function compressFromFile(file, maxSide, quality){
+    return new Promise(function(resolve, reject){
+      const r = new FileReader();
+      r.onload = function(){ compressFromDataUrl(r.result, maxSide, quality).then(resolve).catch(reject); };
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+  }
+  function compressFromDataUrl(dataUrl, maxSide, quality){
+    return new Promise(function(resolve, reject){
+      const img = new Image();
+      img.onload = function(){
+        let w = img.width, h = img.height;
+        const scale = Math.min(1, maxSide / Math.max(w, h));
+        w = Math.round(w * scale); h = Math.round(h * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        try {
+          const out = canvas.toDataURL('image/jpeg', quality);
+          resolve(out);
+        } catch(e){ reject(e); }
+      };
+      img.onerror = reject;
+      img.src = dataUrl;
+    });
+  }
+
+  // ---- Storage wrappers (handle quota) ----
+  function safeSet(key, value){
+    if (!storageAvailable()) return false;
+    try { localStorage.setItem(key, value); return true; }
+    catch(e){ alert('Storage is full or blocked on this browser. Your profile/posts cannot be saved.'); return false; }
+  }
+  function safeGet(key, fallback){
+    if (!storageAvailable()) return fallback;
+    try { const v = localStorage.getItem(key); return v === null ? fallback : v; } catch(e){ return fallback; }
+  }
+
+  // ---- Profile (Join) ----
   var joinBtn = $('join-btn');
   var overlay = $('join-overlay');
   var joinForm = $('join-form');
@@ -4934,36 +4973,31 @@ function renderEssentialPhrasesForCategory() {
   var profileGreeting = $('profile-greeting');
   var logoutBtn = $('logout-btn');
 
-  var commentForm = $('comment-form');
-  var commentPhoto = $('comment-photo');
-  var commentText = $('comment-text');
-  var commentsDisplay = $('comments-display');
-
-  function openOverlay(){ if (overlay){ overlay.classList.remove('hidden'); overlay.classList.add('flex'); } }
-  function closeOverlay(){ if (overlay){ overlay.classList.add('hidden'); overlay.classList.remove('flex'); } }
-
+  function loadProfile(){
+    try { return JSON.parse(safeGet('profileV3','null')); } catch(_){ return null; }
+  }
   function applyProfileUI(){
     var p = loadProfile();
     if (!profileCard) return;
     if (p){
       profileCard.classList.remove('hidden');
-      profileUsername && (profileUsername.textContent = p.username || '');
-      profileFrom && (profileFrom.textContent = p.from || '');
-      profileGreeting && (profileGreeting.textContent = p.greeting || '');
-      if (p.photoDataUrl){
-        profilePhoto && (profilePhoto.src = p.photoDataUrl);
-        profilePhoto && profilePhoto.classList.remove('hidden');
-      } else {
-        if (profilePhoto){ profilePhoto.src = ''; profilePhoto.classList.add('hidden'); }
+      if (profileUsername) profileUsername.textContent = p.username || '';
+      if (profileFrom) profileFrom.textContent = p.from || '';
+      if (profileGreeting) profileGreeting.textContent = p.greeting || '';
+      if (profilePhoto){
+        if (p.photoDataUrl){ profilePhoto.src = p.photoDataUrl; profilePhoto.classList.remove('hidden'); }
+        else { profilePhoto.src = ''; profilePhoto.classList.add('hidden'); }
       }
     } else {
       profileCard.classList.add('hidden');
     }
   }
+  function openOverlay(){ if (overlay){ overlay.classList.remove('hidden'); overlay.classList.add('flex'); } }
+  function closeOverlay(){ if (overlay){ overlay.classList.add('hidden'); overlay.classList.remove('flex'); } }
 
-  // Modal handlers
   joinBtn && joinBtn.addEventListener('click', openOverlay);
   cancelBtn && cancelBtn.addEventListener('click', closeOverlay);
+
   joinForm && joinForm.addEventListener('submit', function(e){
     e.preventDefault();
     var username = (document.getElementById('join-username').value || '').trim();
@@ -4971,66 +5005,93 @@ function renderEssentialPhrasesForCategory() {
     var greeting = (document.getElementById('join-greeting').value || '').trim();
     var file = document.getElementById('join-photo').files[0];
     if (!username){ alert('Please enter a username.'); return; }
-    function finish(url){
-      saveProfile({ username: username, from: from, greeting: greeting, photoDataUrl: url || '' });
-      closeOverlay();
-      applyProfileUI();
+    function finish(photoUrl){
+      var ok = safeSet('profileV3', JSON.stringify({ username: username, from: from, greeting: greeting, photoDataUrl: photoUrl || '' }));
+      if (ok){ closeOverlay(); applyProfileUI(); }
     }
     if (file){
       if (!file.type || file.type.indexOf('image/') !== 0){ alert('Please select an image file.'); return; }
-      var fr = new FileReader();
-      fr.onload = function(){ finish(fr.result); };
-      fr.onerror = function(){ alert('Could not read the selected image.'); };
-      fr.readAsDataURL(file);
+      compressFromFile(file, 256, 0.8).then(finish).catch(function(){ alert('Could not process the selected image.'); });
     } else {
       finish('');
     }
   });
 
   logoutBtn && logoutBtn.addEventListener('click', function(){
-    localStorage.removeItem('profileV2');
+    if (storageAvailable()) try { localStorage.removeItem('profileV3'); } catch(_){}
     applyProfileUI();
   });
 
-  // Gate post submit: must be joined + require 1 image & non-empty comment
+  // ---- Posts persistence (per-device) ----
+  var commentForm = $('comment-form');
+  var commentName = $('comment-name');
+  var commentCountrySelect = $('comment-country');
+  var commentPhoto = $('comment-photo');
+  var commentText = $('comment-text');
+  var commentsDisplay = $('comments-display');
+
+  function readPosts(){ try { return JSON.parse(safeGet('tripPostsV1','[]')) || []; } catch(_){ return []; } }
+  function writePosts(items){ safeSet('tripPostsV1', JSON.stringify(items)); }
+  function renderStoredPosts(){
+    var items = readPosts().sort(function(a,b){ return b.ts - a.ts; });
+    if (!commentsDisplay) return;
+    items.forEach(function(p){
+      var card = document.createElement('div');
+      card.className = 'p-4 bg-white rounded-lg shadow-xl border border-gray-200 transform transition duration-300 hover:-translate-y-1 hover:shadow-2xl';
+      var html = '';
+      if (p.photoDataUrl) html += '<img src="'+p.photoDataUrl+'" alt="User uploaded photo" class="w-full h-48 object-cover rounded mb-3">';
+      html += '<p class="text-sm text-gray-500 mb-1">'+ (p.country || '') +'</p>';
+      html += '<h4 class="font-semibold text-lg mb-1">'+ (p.name || 'Anonymous') +'</h4>';
+      html += '<p class="text-gray-700">'+ (p.text || '') +'</p>';
+      html += '<div class="flex justify-end"><button class="delete-comment-btn text-red-600 text-sm underline mt-3">Delete</button></div>';
+      card.innerHTML = html;
+      var delBtn = card.querySelector('.delete-comment-btn');
+      delBtn && delBtn.addEventListener('click', function(){
+        if (confirm('Delete this post?')){
+          var items = readPosts().filter(function(x){ return x.id !== p.id; });
+          writePosts(items);
+          card.remove();
+        }
+      });
+      commentsDisplay.appendChild(card);
+    });
+  }
+
+  // Intercept submit (capture): ensure joined + compress + save to storage after UI card is added
   if (commentForm){
     commentForm.addEventListener('submit', function(e){
-      var p = loadProfile();
-      if (!p){
-        e.preventDefault(); e.stopImmediatePropagation(); openOverlay(); return;
-      }
+      var prof = loadProfile();
+      if (!prof){ e.preventDefault(); e.stopImmediatePropagation(); openOverlay(); return; }
       var file = commentPhoto && commentPhoto.files ? commentPhoto.files[0] : null;
       var text = commentText ? (commentText.value || '').trim() : '';
       if (!file){ e.preventDefault(); e.stopImmediatePropagation(); alert('Please add exactly one picture.'); return; }
       if (!text){ e.preventDefault(); e.stopImmediatePropagation(); alert('Please add a comment.'); return; }
-      // Otherwise, let the page's original submit handler run
+
+      setTimeout(function(){
+        var save = function(imgDataUrl){
+          var post = {
+            id: Date.now(),
+            name: (commentName && commentName.value) ? commentName.value.trim() : (prof.username || 'Anonymous'),
+            country: commentCountrySelect ? commentCountrySelect.value : '',
+            text: text,
+            photoDataUrl: imgDataUrl || '',
+            ts: Date.now()
+          };
+          var items = readPosts(); items.push(post); writePosts(items);
+        };
+        if (file){
+          compressFromFile(file, 1024, 0.75).then(save).catch(function(){});
+        } else {
+          save('');
+        }
+      }, 0);
     }, true);
   }
 
-  // Add profile header to new cards
-  function augmentCards(){
-    var p = loadProfile();
-    if (!p || !commentsDisplay) return;
-    Array.prototype.forEach.call(commentsDisplay.children, function(card){
-      if (card.getAttribute('data-profile-applied') === '1') return;
-      var header = document.createElement('div');
-      header.className = 'flex items-center mb-2';
-      header.innerHTML =
-        (p.photoDataUrl ? '<img src="'+p.photoDataUrl+'" class="w-10 h-10 rounded-full object-cover border border-gray-300 mr-2" alt="Profile">' : '') +
-        '<div class="text-sm"><div class="font-semibold">'+ (p.username || '') +'</div>' +
-        (p.from ? '<div class="text-gray-600">'+ p.from +'</div>' : '') +
-        (p.greeting ? '<div class="text-gray-700">'+ p.greeting +'</div>' : '') + '</div>';
-      card.insertBefore(header, card.firstChild);
-      card.setAttribute('data-profile-applied','1');
-    });
-  }
-  if (window.MutationObserver && commentsDisplay){
-    new MutationObserver(function(){ augmentCards(); }).observe(commentsDisplay, { childList: true });
-  }
-
   document.addEventListener('DOMContentLoaded', function(){
+    renderStoredPosts();
     applyProfileUI();
-    setTimeout(augmentCards, 0);
+    setTimeout(updateThaiNote, 0);
   });
 })();
 </script>
