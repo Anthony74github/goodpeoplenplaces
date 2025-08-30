@@ -452,6 +452,7 @@
         <div class="container mx-auto max-w-6xl">
             <!-- Added handshake emoji to foster a sense of connection and sharing -->
             <h2 class="text-3xl md:text-4xl font-bold mb-8 text-center text-gray-900">Share Your Trip 🤝</h2>
+<!-- Join (Supabase-backed) -->
 <div class="flex justify-center mt-4">
   <button id="join-btn" class="button-gradient text-white py-2 px-6 rounded-md shadow-md hover:scale-105 transition duration-300">Join</button>
 </div>
@@ -4859,239 +4860,232 @@ function renderEssentialPhrasesForCategory() {
         });
     </script>
 
-<!-- Join Modal -->
-<div id="join-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden items-center justify-center">
+<!-- Auth Modal (email OTP or Google) -->
+<div id="auth-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden items-center justify-center">
   <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl w-[92%] max-w-md">
-    <h3 class="text-xl font-semibold mb-4 text-center text-blue-600">Create Your Profile</h3>
-    <form id="join-form" class="space-y-3">
+    <h3 class="text-xl font-semibold mb-3 text-center text-blue-600">Sign in to Join</h3>
+    <p class="text-sm text-gray-700 text-center mb-4">Use Google or enter your email for a login link.</p>
+    <div class="space-y-3">
+      <button id="login-google" class="w-full button-gradient text-white py-2 px-6 rounded-md shadow-md">Continue with Google</button>
       <div>
-        <label class="block text-sm font-semibold mb-1" for="join-photo">Profile Picture</label>
-        <input id="join-photo" type="file" accept="image/*" class="w-full p-2 border border-gray-300 rounded-md">
+        <label class="block text-sm font-semibold mb-1" for="login-email">Email</label>
+        <input id="login-email" type="email" class="w-full p-3 border border-gray-300 rounded-md" placeholder="you@example.com">
       </div>
-      <div>
-        <label class="block text-sm font-semibold mb-1" for="join-username">Username</label>
-        <input id="join-username" type="text" maxlength="30" class="w-full p-3 border border-gray-300 rounded-md" placeholder="e.g. SunnyTraveler" required>
-      </div>
-      <div>
-        <label class="block text-sm font-semibold mb-1" for="join-from">From</label>
-        <input id="join-from" type="text" maxlength="40" class="w-full p-3 border border-gray-300 rounded-md" placeholder="e.g. NYC, USA">
-      </div>
-      <div>
-        <label class="block text-sm font-semibold mb-1" for="join-greeting">Greeting</label>
-        <input id="join-greeting" type="text" maxlength="80" class="w-full p-3 border border-gray-300 rounded-md" placeholder="e.g. Happy to meet you all!">
-      </div>
-      <div class="flex justify-between items-center pt-2">
-        <button type="button" id="join-cancel" class="text-gray-600 hover:underline">Cancel</button>
-        <button type="submit" class="button-gradient text-white py-2 px-6 rounded-md shadow-md">Save & Continue</button>
-      </div>
-    </form>
+      <button id="login-email-btn" class="w-full bg-blue-600 text-white py-2 rounded-md shadow hover:opacity-90">Send Login Link</button>
+      <button id="auth-cancel" class="w-full mt-1 text-gray-600 hover:underline">Cancel</button>
+    </div>
   </div>
 </div>
-<!-- Thailand note, storage-safe profile, and persistent posts (non-destructive) -->
+<!-- Supabase Auth + Storage + Posts (Option A) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function(){
+  const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
+  const SUPABASE_ANON_KEY = 'YOUR_PUBLIC_ANON_KEY';
+  const SUPABASE_BUCKET = 'trip-photos';
+  const API_BASE = '';
+
   function $(id){ return document.getElementById(id); }
-  function storageAvailable(){
-    try { const k='__tst__'; localStorage.setItem(k,'1'); localStorage.removeItem(k); return true; }
-    catch(e){ return false; }
-  }
+  function el(tag, cls){ const e=document.createElement(tag); if(cls) e.className=cls; return e; }
+  const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // ---- Thailand note toggle (once; larger font) ----
-  function updateThaiNote(){
-    var note = $('phrases-note'), list = $('essential-phrases-list');
-    if (!note || !list) return;
-    try {
-      if (typeof selectedCountry !== 'undefined' && selectedCountry === 'Thailand') {
-        note.textContent = 'Generally, females use "ka" and males use "krap" after some statements or questions to be more polite.';
-        note.classList.remove('hidden');
-      } else {
-        note.textContent = '';
-        note.classList.add('hidden');
-      }
-    } catch(_) {}
-  }
-  document.addEventListener('change', function(e){
-    if (e.target && (e.target.id === 'country-select' || e.target.id === 'essential-phrase-category-select')) {
-      setTimeout(updateThaiNote, 0);
-    }
-  });
-  if (window.MutationObserver && $('essential-phrases-list')) {
-    new MutationObserver(function(){ setTimeout(updateThaiNote, 0); })
-      .observe($('essential-phrases-list'), { childList: true });
-  }
+  const joinBtn = $('join-btn');
+  const profileCard = $('profile-card');
+  const profilePhoto = $('profile-photo');
+  const profileUsername = $('profile-username');
+  const profileFrom = $('profile-from');
+  const profileGreeting = $('profile-greeting');
+  const logoutBtn = $('logout-btn');
 
-  // ---- Image compression helpers ----
-  function compressFromFile(file, maxSide, quality){
-    return new Promise(function(resolve, reject){
-      const r = new FileReader();
-      r.onload = function(){ compressFromDataUrl(r.result, maxSide, quality).then(resolve).catch(reject); };
-      r.onerror = reject;
-      r.readAsDataURL(file);
-    });
-  }
-  function compressFromDataUrl(dataUrl, maxSide, quality){
-    return new Promise(function(resolve, reject){
-      const img = new Image();
-      img.onload = function(){
-        let w = img.width, h = img.height;
-        const scale = Math.min(1, maxSide / Math.max(w, h));
-        w = Math.round(w * scale); h = Math.round(h * scale);
-        const canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
-        try {
-          const out = canvas.toDataURL('image/jpeg', quality);
-          resolve(out);
-        } catch(e){ reject(e); }
-      };
-      img.onerror = reject;
-      img.src = dataUrl;
-    });
-  }
+  const commentForm = $('comment-form');
+  const commentName = $('comment-name');
+  const commentCountry = $('comment-country');
+  const commentPhoto = $('comment-photo');
+  const commentText = $('comment-text');
+  const commentsDisplay = $('comments-display');
 
-  // ---- Storage wrappers (handle quota) ----
-  function safeSet(key, value){
-    if (!storageAvailable()) return false;
-    try { localStorage.setItem(key, value); return true; }
-    catch(e){ alert('Storage is full or blocked on this browser. Your profile/posts cannot be saved.'); return false; }
+  // Inject auth overlay markup if not present
+  let authOverlay = $('auth-overlay');
+  if (!authOverlay) {
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `<!-- Auth Modal (email OTP or Google) -->\n<div id="auth-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden items-center justify-center">\n  <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl w-[92%] max-w-md">\n    <h3 class="text-xl font-semibold mb-3 text-center text-blue-600">Sign in to Join</h3>\n    <p class="text-sm text-gray-700 text-center mb-4">Use Google or enter your email for a login link.</p>\n    <div class="space-y-3">\n      <button id="login-google" class="w-full button-gradient text-white py-2 px-6 rounded-md shadow-md">Continue with Google</button>\n      <div>\n        <label class="block text-sm font-semibold mb-1" for="login-email">Email</label>\n        <input id="login-email" type="email" class="w-full p-3 border border-gray-300 rounded-md" placeholder="you@example.com">\n      </div>\n      <button id="login-email-btn" class="w-full bg-blue-600 text-white py-2 rounded-md shadow hover:opacity-90">Send Login Link</button>\n      <button id="auth-cancel" class="w-full mt-1 text-gray-600 hover:underline">Cancel</button>\n    </div>\n  </div>\n</div>`;
+    document.body.appendChild(wrap.firstElementChild);
+    authOverlay = $('auth-overlay');
   }
-  function safeGet(key, fallback){
-    if (!storageAvailable()) return fallback;
-    try { const v = localStorage.getItem(key); return v === null ? fallback : v; } catch(e){ return fallback; }
-  }
+  const loginGoogleBtn = $('login-google');
+  const loginEmailInput = $('login-email');
+  const loginEmailBtn = $('login-email-btn');
+  const authCancelBtn = $('auth-cancel');
 
-  // ---- Profile (Join) ----
-  var joinBtn = $('join-btn');
-  var overlay = $('join-overlay');
-  var joinForm = $('join-form');
-  var cancelBtn = $('join-cancel');
-  var profileCard = $('profile-card');
-  var profilePhoto = $('profile-photo');
-  var profileUsername = $('profile-username');
-  var profileFrom = $('profile-from');
-  var profileGreeting = $('profile-greeting');
-  var logoutBtn = $('logout-btn');
+  const joinOverlay = $('join-overlay');
+  const joinForm = $('join-form');
+  const joinCancel = $('join-cancel');
 
-  function loadProfile(){
-    try { return JSON.parse(safeGet('profileV3','null')); } catch(_){ return null; }
+  function openAuth(){ authOverlay.classList.remove('hidden'); authOverlay.classList.add('flex'); }
+  function closeAuth(){ authOverlay.classList.add('hidden'); authOverlay.classList.remove('flex'); }
+
+  async function getSession(){ const { data: { session } } = await supa.auth.getSession(); return session; }
+  async function getUser(){ const { data: { user } } = await supa.auth.getUser(); return user; }
+
+  async function fetchProfile(uid){
+    const { data, error } = await supa.from('profiles').select('*').eq('id', uid).single();
+    return data || null;
   }
-  function applyProfileUI(){
-    var p = loadProfile();
+  function renderProfile(profile){
     if (!profileCard) return;
-    if (p){
+    if (profile){
       profileCard.classList.remove('hidden');
-      if (profileUsername) profileUsername.textContent = p.username || '';
-      if (profileFrom) profileFrom.textContent = p.from || '';
-      if (profileGreeting) profileGreeting.textContent = p.greeting || '';
-      if (profilePhoto){
-        if (p.photoDataUrl){ profilePhoto.src = p.photoDataUrl; profilePhoto.classList.remove('hidden'); }
-        else { profilePhoto.src = ''; profilePhoto.classList.add('hidden'); }
-      }
+      profileUsername.textContent = profile.username || '';
+      profileFrom.textContent = profile.from || '';
+      profileGreeting.textContent = profile.greeting || '';
+      if (profile.photo_url){ profilePhoto.src = profile.photo_url; profilePhoto.classList.remove('hidden'); }
+      else { profilePhoto.src=''; profilePhoto.classList.add('hidden'); }
     } else {
       profileCard.classList.add('hidden');
+      profileUsername.textContent = ''; profileFrom.textContent = ''; profileGreeting.textContent = '';
+      profilePhoto.src=''; profilePhoto.classList.add('hidden');
     }
   }
-  function openOverlay(){ if (overlay){ overlay.classList.remove('hidden'); overlay.classList.add('flex'); } }
-  function closeOverlay(){ if (overlay){ overlay.classList.add('hidden'); overlay.classList.remove('flex'); } }
 
-  joinBtn && joinBtn.addEventListener('click', openOverlay);
-  cancelBtn && cancelBtn.addEventListener('click', closeOverlay);
-
-  joinForm && joinForm.addEventListener('submit', function(e){
-    e.preventDefault();
-    var username = (document.getElementById('join-username').value || '').trim();
-    var from = (document.getElementById('join-from').value || '').trim();
-    var greeting = (document.getElementById('join-greeting').value || '').trim();
-    var file = document.getElementById('join-photo').files[0];
-    if (!username){ alert('Please enter a username.'); return; }
-    function finish(photoUrl){
-      var ok = safeSet('profileV3', JSON.stringify({ username: username, from: from, greeting: greeting, photoDataUrl: photoUrl || '' }));
-      if (ok){ closeOverlay(); applyProfileUI(); }
-    }
+  async function upsertProfile(uid, username, from, greeting, file){
+    let photo_url = null;
     if (file){
-      if (!file.type || file.type.indexOf('image/') !== 0){ alert('Please select an image file.'); return; }
-      compressFromFile(file, 256, 0.8).then(finish).catch(function(){ alert('Could not process the selected image.'); });
-    } else {
-      finish('');
+      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+      const path = `profiles/${uid}.${ext}`;
+      const { error: upErr } = await supa.storage.from(SUPABASE_BUCKET).upload(path, file, { upsert: true, cacheControl: '3600' });
+      if (upErr){ alert('Upload failed: ' + upErr.message); throw upErr; }
+      const { data: pub } = supa.storage.from(SUPABASE_BUCKET).getPublicUrl(path);
+      photo_url = pub.publicUrl;
     }
-  });
+    const payload = { id: uid, username, from, greeting };
+    if (photo_url) payload.photo_url = photo_url;
+    const { data, error } = await supa.from('profiles').upsert(payload).select().single();
+    if (error){ alert('Could not save profile: ' + error.message); throw error; }
+    return data;
+  }
 
-  logoutBtn && logoutBtn.addEventListener('click', function(){
-    if (storageAvailable()) try { localStorage.removeItem('profileV3'); } catch(_){}
-    applyProfileUI();
-  });
-
-  // ---- Posts persistence (per-device) ----
-  var commentForm = $('comment-form');
-  var commentName = $('comment-name');
-  var commentCountrySelect = $('comment-country');
-  var commentPhoto = $('comment-photo');
-  var commentText = $('comment-text');
-  var commentsDisplay = $('comments-display');
-
-  function readPosts(){ try { return JSON.parse(safeGet('tripPostsV1','[]')) || []; } catch(_){ return []; } }
-  function writePosts(items){ safeSet('tripPostsV1', JSON.stringify(items)); }
-  function renderStoredPosts(){
-    var items = readPosts().sort(function(a,b){ return b.ts - a.ts; });
+  async function fetchPosts(){
+    const res = await fetch(`${API_BASE}/api/list`);
+    if (!res.ok) return [];
+    const j = await res.json();
+    return j.items || [];
+  }
+  function renderPosts(items){
     if (!commentsDisplay) return;
-    items.forEach(function(p){
-      var card = document.createElement('div');
-      card.className = 'p-4 bg-white rounded-lg shadow-xl border border-gray-200 transform transition duration-300 hover:-translate-y-1 hover:shadow-2xl';
-      var html = '';
-      if (p.photoDataUrl) html += '<img src="'+p.photoDataUrl+'" alt="User uploaded photo" class="w-full h-48 object-cover rounded mb-3">';
-      html += '<p class="text-sm text-gray-500 mb-1">'+ (p.country || '') +'</p>';
-      html += '<h4 class="font-semibold text-lg mb-1">'+ (p.name || 'Anonymous') +'</h4>';
-      html += '<p class="text-gray-700">'+ (p.text || '') +'</p>';
-      html += '<div class="flex justify-end"><button class="delete-comment-btn text-red-600 text-sm underline mt-3">Delete</button></div>';
-      card.innerHTML = html;
-      var delBtn = card.querySelector('.delete-comment-btn');
-      delBtn && delBtn.addEventListener('click', function(){
-        if (confirm('Delete this post?')){
-          var items = readPosts().filter(function(x){ return x.id !== p.id; });
-          writePosts(items);
-          card.remove();
-        }
+    commentsDisplay.innerHTML='';
+    items.forEach(p => {
+      const card = el('div','p-4 bg-white rounded-lg shadow-xl border border-gray-200 transform transition duration-300 hover:-translate-y-1 hover:shadow-2xl');
+      const top = el('div','flex items-center mb-2');
+      if (p.profile && p.profile.photo_url){
+        const img = el('img','w-10 h-10 rounded-full object-cover border border-gray-300 mr-2'); img.src = p.profile.photo_url; img.alt='Profile'; top.appendChild(img);
+      }
+      const txt = el('div','text-sm');
+      const u = el('div','font-semibold'); u.textContent = (p.profile && p.profile.username) || 'Anonymous'; txt.appendChild(u);
+      if (p.profile && p.profile.from){ const f = el('div','text-gray-600'); f.textContent = p.profile.from; txt.appendChild(f); }
+      if (p.profile && p.profile.greeting){ const g = el('div','text-gray-700'); g.textContent = p.profile.greeting; txt.appendChild(g); }
+      top.appendChild(txt);
+      card.appendChild(top);
+
+      if (p.photo_url){ const im = el('img','w-full h-48 object-cover rounded mb-3'); im.src = p.photo_url; im.alt='User uploaded photo'; card.appendChild(im); }
+      if (p.country){ const c = el('p','text-sm text-gray-500 mb-1'); c.textContent = p.country; card.appendChild(c); }
+      const h = el('h4','font-semibold text-lg mb-1'); h.textContent = p.name || (p.profile && p.profile.username) || 'Anonymous'; card.appendChild(h);
+      if (p.text){ const t = el('p','text-gray-700'); t.textContent = p.text; card.appendChild(t); }
+
+      const delWrap = el('div','flex justify-end');
+      const del = el('button','delete-comment-btn text-red-600 text-sm underline mt-3'); del.textContent='Delete';
+      del.addEventListener('click', async () => {
+        if (!confirm('Delete this post?')) return;
+        const sess = await getSession();
+        const res = await fetch(`${API_BASE}/api/delete?id=${encodeURIComponent(p.id)}`, { method:'DELETE', headers:{ 'Authorization': `Bearer ${sess?.access_token || ''}` }});
+        if (res.ok){ card.remove(); } else { alert('Delete failed'); }
       });
+      delWrap.appendChild(del);
+      card.appendChild(delWrap);
+
       commentsDisplay.appendChild(card);
     });
   }
+  async function refreshFeed(){ renderPosts(await fetchPosts()); }
 
-  // Intercept submit (capture): ensure joined + compress + save to storage after UI card is added
-  if (commentForm){
-    commentForm.addEventListener('submit', function(e){
-      var prof = loadProfile();
-      if (!prof){ e.preventDefault(); e.stopImmediatePropagation(); openOverlay(); return; }
-      var file = commentPhoto && commentPhoto.files ? commentPhoto.files[0] : null;
-      var text = commentText ? (commentText.value || '').trim() : '';
-      if (!file){ e.preventDefault(); e.stopImmediatePropagation(); alert('Please add exactly one picture.'); return; }
-      if (!text){ e.preventDefault(); e.stopImmediatePropagation(); alert('Please add a comment.'); return; }
+  // Join click: auth or open profile modal
+  joinBtn && joinBtn.addEventListener('click', async () => {
+    const { data: { session } } = await supa.auth.getSession();
+    if (!session){ openAuth(); return; }
+    if (joinOverlay){ joinOverlay.classList.remove('hidden'); joinOverlay.classList.add('flex'); }
+  });
 
-      setTimeout(function(){
-        var save = function(imgDataUrl){
-          var post = {
-            id: Date.now(),
-            name: (commentName && commentName.value) ? commentName.value.trim() : (prof.username || 'Anonymous'),
-            country: commentCountrySelect ? commentCountrySelect.value : '',
-            text: text,
-            photoDataUrl: imgDataUrl || '',
-            ts: Date.now()
-          };
-          var items = readPosts(); items.push(post); writePosts(items);
-        };
-        if (file){
-          compressFromFile(file, 1024, 0.75).then(save).catch(function(){});
-        } else {
-          save('');
-        }
-      }, 0);
-    }, true);
-  }
+  // Auth overlay actions
+  loginGoogleBtn && loginGoogleBtn.addEventListener('click', async () => {
+    await supa.auth.signInWithOAuth({ provider:'google', options:{ redirectTo: location.href }});
+  });
+  loginEmailBtn && loginEmailBtn.addEventListener('click', async () => {
+    const email = (loginEmailInput && loginEmailInput.value || '').trim();
+    if (!email){ alert('Enter your email'); return; }
+    const { error } = await supa.auth.signInWithOtp({ email, options: { emailRedirectTo: location.href } });
+    if (error){ alert(error.message); return; }
+    alert('Check your email for the login link!');
+    authOverlay.classList.add('hidden'); authOverlay.classList.remove('flex');
+  });
+  authCancelBtn && authCancelBtn.addEventListener('click', () => {
+    authOverlay.classList.add('hidden'); authOverlay.classList.remove('flex');
+  });
 
-  document.addEventListener('DOMContentLoaded', function(){
-    renderStoredPosts();
-    applyProfileUI();
-    setTimeout(updateThaiNote, 0);
+  // Profile modal submit (existing form)
+  joinForm && joinForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const { data: { session } } = await supa.auth.getSession();
+    if (!session){ openAuth(); return; }
+    const { data: { user } } = await supa.auth.getUser();
+    const username = (document.getElementById('join-username').value || '').trim();
+    const from = (document.getElementById('join-from').value || '').trim();
+    const greeting = (document.getElementById('join-greeting').value || '').trim();
+    const file = document.getElementById('join-photo').files[0] || null;
+    try {
+      const prof = await upsertProfile(user.id, username, from, greeting, file);
+      renderProfile(prof);
+      if (document.getElementById('comment-name')){ document.getElementById('comment-name').value = prof.username || ''; document.getElementById('comment-name').readOnly = true; }
+      if (joinOverlay){ joinOverlay.classList.add('hidden'); joinOverlay.classList.remove('flex'); }
+    } catch(e){ console.error(e); }
+  });
+
+  logoutBtn && logoutBtn.addEventListener('click', async () => { await supa.auth.signOut(); renderProfile(null); await refreshFeed(); });
+
+  // Intercept comment submit: upload to storage + POST /api/post
+  commentForm && commentForm.addEventListener('submit', async (e) => {
+    const { data: { session } } = await supa.auth.getSession();
+    if (!session){ e.preventDefault(); openAuth(); return; }
+    const file = commentPhoto && commentPhoto.files ? commentPhoto.files[0] : null;
+    const text = commentText ? (commentText.value || '').trim() : '';
+    if (!file){ e.preventDefault(); alert('Please add exactly one picture.'); return; }
+    if (!text){ e.preventDefault(); alert('Please add a comment.'); return; }
+    e.preventDefault();
+    const { data: { user } } = await supa.auth.getUser();
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const path = `posts/${user.id}/${Date.now()}.${ext}`;
+    const { error: upErr } = await supa.storage.from(SUPABASE_BUCKET).upload(path, file, { upsert: false, cacheControl: '3600' });
+    if (upErr){ alert('Upload failed: ' + upErr.message); return; }
+    const { data: pub } = supa.storage.from(SUPABASE_BUCKET).getPublicUrl(path);
+    const photo_url = pub.publicUrl;
+    const res = await fetch(`/api/post`, { method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization': `Bearer ${session.access_token}` }, body: JSON.stringify({ country: commentCountry ? commentCountry.value : '', text, photo_url, name: commentName ? (commentName.value || '') : '' }) });
+    if (!res.ok){ alert('Post failed'); return; }
+    await refreshFeed();
+    commentForm.reset();
+  }, true);
+
+  // Boot
+  document.addEventListener('DOMContentLoaded', async () => {
+    const { data: { session } } = await supa.auth.getSession();
+    if (session){
+      const { data: { user } } = await supa.auth.getUser();
+      const prof = await fetchProfile(user.id); renderProfile(prof);
+      if (document.getElementById('comment-name') && prof){ document.getElementById('comment-name').value = prof.username || ''; document.getElementById('comment-name').readOnly = true; }
+    }
+    await refreshFeed();
+  });
+
+  supa.auth.onAuthStateChange(async (ev, session) => {
+    if (ev === 'SIGNED_IN'){ const { data: { user } } = await supa.auth.getUser(); const p = await fetchProfile(user.id); renderProfile(p); await refreshFeed(); }
+    if (ev === 'SIGNED_OUT'){ renderProfile(null); await refreshFeed(); }
   });
 })();
 </script>
