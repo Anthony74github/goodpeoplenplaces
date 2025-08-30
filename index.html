@@ -91,6 +91,7 @@
             background-position: center;
         }
     </style>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-gray-50 text-gray-800">
@@ -447,10 +448,8 @@
         <div class="container mx-auto max-w-6xl">
             <!-- Added handshake emoji to foster a sense of connection and sharing -->
             <h2 class="text-3xl md:text-4xl font-bold mb-8 text-center text-gray-900">Share Your Trip 🤝</h2>
-<div class="text-center mb-6">
-  <button id="join-btn" class="button-gradient inline-block px-6 py-2 rounded-md shadow-md hover:scale-105 transition duration-300">
-    Join
-  </button>
+<div class="text-center mb-6" id="join-cta">
+  <button id="join-btn" class="button-gradient inline-block px-6 py-2 rounded-md shadow-md hover:scale-105 transition duration-300">Join</button>
 </div>
 <div id="profile-card" class="max-w-md mx-auto mb-6 hidden text-center">
   <img id="profile-photo" class="w-16 h-16 rounded-full object-cover mx-auto mb-2 hidden" alt="Profile">
@@ -4818,7 +4817,6 @@ function renderEssentialPhrasesForCategory() {
 </div>
 
 
-<!-- Supabase constants -->
 <script>
   const SUPABASE_URL = 'https://gxgmvrjjmbcrujpugnym.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4Z212cmpqbWJjcnVqcHVnbnltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NjYxOTgsImV4cCI6MjA3MjE0MjE5OH0.7W9OhkJ1_s_lddO4uIZ4qzBbko3TcY-r6UeGDPPQ4zY';
@@ -4827,214 +4825,96 @@ function renderEssentialPhrasesForCategory() {
 </script>
 
 
-<!-- Join/auth/profile glue -->
 <script>
 (function(){
-  if (window.__joinGlue) return; window.__joinGlue = true;
-  if (!window.supabase || !window.supabase.createClient) return console.error('Supabase JS missing');
-  const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  const $ = (id) => document.getElementById(id);
-
+  if (window.__joinOnly) return; window.__joinOnly = true;
+  if (!window.supabase || !window.supabase.createClient) { console.error('Supabase JS missing'); return; }
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const $ = id => document.getElementById(id);
   const joinBtn = $('join-btn');
   const authOverlay = $('auth-overlay');
   const authCancel = $('auth-cancel');
   const loginGoogle = $('login-google');
   const loginEmailBtn = $('login-email-btn');
   const loginEmail = $('login-email');
-
   const joinOverlay = $('join-overlay');
-  const joinForm = $('join-form');
   const joinCancel = $('join-cancel');
+  const joinForm = $('join-form');
   const joinUsername = $('join-username');
   const joinFrom = $('join-from');
   const joinGreeting = $('join-greeting');
   const joinPhoto = $('join-photo');
-
   const profileCard = $('profile-card');
   const profilePhoto = $('profile-photo');
   const profileUsername = $('profile-username');
   const profileFrom = $('profile-from');
   const profileGreeting = $('profile-greeting');
 
-  const commentForm = $('comment-form');
-  const commentName = $('comment-name');
-  const commentCountry = $('comment-country');
-  const commentPhoto = $('comment-photo');
-  const commentText = $('comment-text');
-  const commentsDisplay = $('comments-display');
+  function open(el){ if (!el) return; el.classList.remove('hidden'); el.classList.add('flex'); }
+  function close(el){ if (!el) return; el.classList.add('hidden'); el.classList.remove('flex'); }
 
-  function open(el){ el && (el.classList.remove('hidden'), el.classList.add('flex')); }
-  function close(el){ el && (el.classList.add('hidden'), el.classList.remove('flex')); }
+  async function getSession(){ const { data: { session } } = await sb.auth.getSession(); return session; }
+  async function getUser(){ const { data: { user } } = await sb.auth.getUser(); return user; }
 
-  async function getSession(){ const { data: { session } } = await supa.auth.getSession(); return session; }
-  async function getUser(){ const { data: { user } } = await supa.auth.getUser(); return user; }
-
-  function renderProfile(p){
-    if (!profileCard) return;
-    if (p){
-      profileCard.classList.remove('hidden');
-      profileUsername && (profileUsername.textContent = p.username || '');
-      profileFrom && (profileFrom.textContent = p.from || '');
-      profileGreeting && (profileGreeting.textContent = p.greeting || '');
-      if (profilePhoto){
-        if (p.photo_url){ profilePhoto.src = p.photo_url; profilePhoto.classList.remove('hidden'); }
-        else { profilePhoto.src = ''; profilePhoto.classList.add('hidden'); }
-      }
-    } else {
-      profileCard.classList.add('hidden');
-    }
-  }
-
-  async function upsertProfile(uid, username, from, greeting, file){
-    let photo_url = null;
-    if (file){
-      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-      const path = `profiles/${uid}.${ext}`;
-      const { error: upErr } = await supa.storage.from(SUPABASE_BUCKET).upload(path, file, { upsert: true, cacheControl: '3600' });
-      if (upErr) throw upErr;
-      const { data: pub } = supa.storage.from(SUPABASE_BUCKET).getPublicUrl(path);
-      photo_url = pub.publicUrl;
-    }
-    const payload = { id: uid, username, from, greeting };
-    if (photo_url) payload.photo_url = photo_url;
-    const { data, error } = await supa.from('profiles').upsert(payload).select().single();
-    if (error) throw error;
-    return data;
-  }
-
-  async function refreshFeed(){
-    if (!commentsDisplay) return;
-    commentsDisplay.innerHTML = '<div class="text-sm text-gray-500">Loading posts…</div>';
-    const { data, error } = await supa
-      .from('posts')
-      .select('id, created_at, user_id, country, text, photo_url')
-      .order('created_at', { ascending: false })
-      .limit(50);
-    if (error){ commentsDisplay.innerHTML = '<div class="text-sm text-red-600">Could not load posts.</div>'; return; }
-
-    // fetch profiles
-    const ids = Array.from(new Set((data||[]).map(d=>d.user_id).filter(Boolean)));
-    let map = new Map();
-    if (ids.length){
-      const { data: profs } = await supa.from('profiles').select('id, username, from, greeting, photo_url').in('id', ids);
-      (profs||[]).forEach(p => map.set(p.id, p));
-    }
-
-    commentsDisplay.innerHTML = '';
-    (data||[]).forEach(p => {
-      const prof = map.get(p.user_id) || {};
-      const card = document.createElement('div');
-      card.className = 'p-4 bg-white rounded-lg shadow-xl border border-gray-200';
-
-      if (prof.photo_url){
-        const img = document.createElement('img');
-        img.src = prof.photo_url; img.alt = 'Profile';
-        img.className = 'w-10 h-10 rounded-full object-cover border border-gray-300 mb-2';
-        card.appendChild(img);
-      }
-      const meta = document.createElement('div');
-      meta.className = 'text-xs text-gray-500 mb-1';
-      meta.textContent = [p.country, prof.username || 'Traveler', new Date(p.created_at).toLocaleString()].filter(Boolean).join(' • ');
-      card.appendChild(meta);
-
-      if (p.photo_url){
-        const im = document.createElement('img');
-        im.src = p.photo_url; im.alt='Trip photo';
-        im.className = 'w-full max-h-[420px] object-cover rounded mb-2';
-        card.appendChild(im);
-      }
-      if (p.text){
-        const t = document.createElement('p');
-        t.className = 'text-gray-800 whitespace-pre-wrap'; t.textContent = p.text;
-        card.appendChild(t);
-      }
-      commentsDisplay.appendChild(card);
-    });
-  }
-
-  // Join button behavior
   joinBtn && joinBtn.addEventListener('click', async () => {
-    const session = await getSession();
-    if (!session){ open(authOverlay); }
-    else { open(joinOverlay); }
+    const s = await getSession();
+    if (!s) open(authOverlay);
+    else open(joinOverlay);
   });
 
-  // Auth modal handlers
-  authCancel && authCancel.addEventListener('click', () => close(authOverlay));
-  loginGoogle && loginGoogle.addEventListener('click', async () => {
-    await supa.auth.signInWithOAuth({ provider:'google', options: { redirectTo: window.location.origin } });
+  authCancel && authCancel.addEventListener('click', ()=> close(authOverlay));
+  loginGoogle && loginGoogle.addEventListener('click', async ()=>{
+    await sb.auth.signInWithOAuth({ provider:'google', options:{ redirectTo: window.location.origin } });
   });
-  loginEmailBtn && loginEmailBtn.addEventListener('click', async () => {
+  loginEmailBtn && loginEmailBtn.addEventListener('click', async ()=>{
     const email = (loginEmail && loginEmail.value || '').trim();
     if (!email) return alert('Enter your email');
-    const { error } = await supa.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin } });
-    if (error) alert(error.message);
-    else { alert('Magic link sent!'); close(authOverlay); }
+    const { error } = await sb.auth.signInWithOtp({ email, options:{ emailRedirectTo: window.location.origin } });
+    if (error) alert(error.message); else { alert('Magic link sent!'); close(authOverlay); }
   });
 
-  // Profile modal handlers
-  joinCancel && joinCancel.addEventListener('click', () => close(joinOverlay));
-  joinForm && joinForm.addEventListener('submit', async (e) => {
+  joinCancel && joinCancel.addEventListener('click', ()=> close(joinOverlay));
+  joinForm && joinForm.addEventListener('submit', async (e)=>{
     e.preventDefault();
-    const { data: { user } } = await supa.auth.getUser();
+    const user = await getUser();
     if (!user){ open(authOverlay); return; }
     try{
-      const prof = await upsertProfile(
-        user.id,
-        (joinUsername && joinUsername.value || '').trim(),
-        (joinFrom && joinFrom.value || '').trim(),
-        (joinGreeting && joinGreeting.value || '').trim(),
-        (joinPhoto && joinPhoto.files && joinPhoto.files[0]) || null
-      );
-      renderProfile(prof);
-      if (commentName){ commentName.value = prof.username || ''; commentName.readOnly = true; }
+      let photo_url = null;
+      const file = joinPhoto && joinPhoto.files && joinPhoto.files[0];
+      if (file){
+        const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+        const path = `profiles/${user.id}.${ext}`;
+        const { error: upErr } = await sb.storage.from(SUPABASE_BUCKET).upload(path, file, { upsert: true, cacheControl: '3600' });
+        if (upErr) throw upErr;
+        const { data: pub } = sb.storage.from(SUPABASE_BUCKET).getPublicUrl(path);
+        photo_url = pub.publicUrl;
+      }
+      const payload = {
+        id: user.id,
+        username: (joinUsername && joinUsername.value || '').trim(),
+        from: (joinFrom && joinFrom.value || '').trim(),
+        greeting: (joinGreeting && joinGreeting.value || '').trim()
+      };
+      if (photo_url) payload.photo_url = photo_url;
+      const { data, error } = await sb.from('profiles').upsert(payload).select().single();
+      if (error) throw error;
+      if (profileCard) profileCard.classList.remove('hidden');
+      if (profileUsername) profileUsername.textContent = data.username || '';
+      if (profileFrom) profileFrom.textContent = data.from || '';
+      if (profileGreeting) profileGreeting.textContent = data.greeting || '';
+      if (profilePhoto){
+        if (data.photo_url){ profilePhoto.src = data.photo_url; profilePhoto.classList.remove('hidden'); }
+        else { profilePhoto.src = ''; profilePhoto.classList.add('hidden'); }
+      }
       close(joinOverlay);
-    }catch(err){ console.error(err); alert('Could not save profile.'); }
-  });
-
-  // Comment posting (requires auth)
-  commentForm && commentForm.addEventListener('submit', async (e) => {
-    const session = await getSession();
-    if (!session){ e.preventDefault(); open(authOverlay); return; }
-    e.preventDefault();
-    const { data: { user } } = await supa.auth.getUser();
-    const file = commentPhoto && commentPhoto.files ? commentPhoto.files[0] : null;
-    const text = commentText ? (commentText.value || '').trim() : '';
-    if (!file || !text){ alert('Add one photo and a comment.'); return; }
-    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-    const path = `posts/${user.id}/${Date.now()}.${ext}`;
-    const { error: upErr } = await supa.storage.from(SUPABASE_BUCKET).upload(path, file, { upsert: false, cacheControl: '3600' });
-    if (upErr){ alert('Upload failed: ' + upErr.message); return; }
-    const { data: pub } = supa.storage.from(SUPABASE_BUCKET).getPublicUrl(path);
-    const photo_url = pub.publicUrl;
-    const { error: insErr } = await supa.from('posts').insert({
-      user_id: user.id,
-      name: commentName ? commentName.value : '',
-      country: commentCountry ? commentCountry.value : '',
-      text,
-      photo_url
-    });
-    if (insErr){ alert('Post failed'); return; }
-    commentForm.reset();
-    await refreshFeed();
-  }, true);
-
-  // Boot: render existing session + posts
-  document.addEventListener('DOMContentLoaded', async () => {
-    const { data: { session } } = await supa.auth.getSession();
-    if (session){
-      const { data: { user } } = await supa.auth.getUser();
-      try{
-        const { data: p } = await supa.from('profiles').select('*').eq('id', user.id).single();
-        if (p) renderProfile(p);
-      }catch(_){}
+      alert('Profile saved. You can now post your trip!');
+    }catch(err){
+      console.error(err);
+      alert('Could not save profile. Check console.');
     }
-    await refreshFeed();
   });
 
-  supa.auth.onAuthStateChange(async (ev, session) => {
-    if (ev === 'SIGNED_IN'){ close(authOverlay); open(joinOverlay); }
-  });
+  sb.auth.onAuthStateChange((ev, s)=>{ if (ev==='SIGNED_IN'){ close(authOverlay); open(joinOverlay); } });
 })();
 </script>
 
