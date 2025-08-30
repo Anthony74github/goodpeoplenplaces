@@ -91,7 +91,6 @@
             background-position: center;
         }
     </style>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-gray-50 text-gray-800">
@@ -448,9 +447,11 @@
         <div class="container mx-auto max-w-6xl">
             <!-- Added handshake emoji to foster a sense of connection and sharing -->
             <h2 class="text-3xl md:text-4xl font-bold mb-8 text-center text-gray-900">Share Your Trip 🤝</h2>
-<div class="text-center mb-6" id="join-cta">
+<!-- Join CTA (centered, minimal) -->
+<div class="text-center my-4">
   <button id="join-btn" class="button-gradient inline-block px-6 py-2 rounded-md shadow-md hover:scale-105 transition duration-300">Join</button>
 </div>
+<!-- Small profile card -->
 <div id="profile-card" class="max-w-md mx-auto mb-6 hidden text-center">
   <img id="profile-photo" class="w-16 h-16 rounded-full object-cover mx-auto mb-2 hidden" alt="Profile">
   <div id="profile-username" class="font-semibold"></div>
@@ -4817,6 +4818,7 @@ function renderEssentialPhrasesForCategory() {
 </div>
 
 
+<!-- Supabase constants -->
 <script>
   const SUPABASE_URL = 'https://gxgmvrjjmbcrujpugnym.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4Z212cmpqbWJjcnVqcHVnbnltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NjYxOTgsImV4cCI6MjA3MjE0MjE5OH0.7W9OhkJ1_s_lddO4uIZ4qzBbko3TcY-r6UeGDPPQ4zY';
@@ -4825,96 +4827,116 @@ function renderEssentialPhrasesForCategory() {
 </script>
 
 
+<!-- GPnP Join Wiring (namespaced, minimal) -->
 <script>
-(function(){
-  if (window.__joinOnly) return; window.__joinOnly = true;
+(function gpnpJoin(){
+  if (window.__gpnpJoin) return; window.__gpnpJoin = true;
+
+  // Require Supabase
   if (!window.supabase || !window.supabase.createClient) { console.error('Supabase JS missing'); return; }
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  const $ = id => document.getElementById(id);
+
+  // Elements
+  const $ = (id) => document.getElementById(id);
   const joinBtn = $('join-btn');
   const authOverlay = $('auth-overlay');
-  const authCancel = $('auth-cancel');
   const loginGoogle = $('login-google');
   const loginEmailBtn = $('login-email-btn');
   const loginEmail = $('login-email');
+  const authCancel = $('auth-cancel');
+
   const joinOverlay = $('join-overlay');
-  const joinCancel = $('join-cancel');
   const joinForm = $('join-form');
+  const joinCancel = $('join-cancel');
   const joinUsername = $('join-username');
   const joinFrom = $('join-from');
   const joinGreeting = $('join-greeting');
   const joinPhoto = $('join-photo');
+
   const profileCard = $('profile-card');
   const profilePhoto = $('profile-photo');
   const profileUsername = $('profile-username');
   const profileFrom = $('profile-from');
   const profileGreeting = $('profile-greeting');
 
-  function open(el){ if (!el) return; el.classList.remove('hidden'); el.classList.add('flex'); }
-  function close(el){ if (!el) return; el.classList.add('hidden'); el.classList.remove('flex'); }
+  function open(el){ el && (el.classList.remove('hidden'), el.classList.add('flex')); }
+  function close(el){ el && (el.classList.add('hidden'), el.classList.remove('flex')); }
 
-  async function getSession(){ const { data: { session } } = await sb.auth.getSession(); return session; }
-  async function getUser(){ const { data: { user } } = await sb.auth.getUser(); return user; }
+  async function session(){ const { data: { session } } = await sb.auth.getSession(); return session; }
+  async function user(){ const { data: { user } } = await sb.auth.getUser(); return user; }
 
+  // Join button
   joinBtn && joinBtn.addEventListener('click', async () => {
-    const s = await getSession();
-    if (!s) open(authOverlay);
-    else open(joinOverlay);
+    const s = await session();
+    if (!s) open(authOverlay); else open(joinOverlay);
   });
 
-  authCancel && authCancel.addEventListener('click', ()=> close(authOverlay));
-  loginGoogle && loginGoogle.addEventListener('click', async ()=>{
+  // Auth overlay
+  authCancel && authCancel.addEventListener('click', () => close(authOverlay));
+  loginGoogle && loginGoogle.addEventListener('click', async () => {
     await sb.auth.signInWithOAuth({ provider:'google', options:{ redirectTo: window.location.origin } });
   });
-  loginEmailBtn && loginEmailBtn.addEventListener('click', async ()=>{
+  loginEmailBtn && loginEmailBtn.addEventListener('click', async () => {
     const email = (loginEmail && loginEmail.value || '').trim();
-    if (!email) return alert('Enter your email');
+    if (!email){ alert('Enter your email'); return; }
     const { error } = await sb.auth.signInWithOtp({ email, options:{ emailRedirectTo: window.location.origin } });
     if (error) alert(error.message); else { alert('Magic link sent!'); close(authOverlay); }
   });
 
-  joinCancel && joinCancel.addEventListener('click', ()=> close(joinOverlay));
-  joinForm && joinForm.addEventListener('submit', async (e)=>{
-    e.preventDefault();
-    const user = await getUser();
-    if (!user){ open(authOverlay); return; }
-    try{
-      let photo_url = null;
-      const file = joinPhoto && joinPhoto.files && joinPhoto.files[0];
-      if (file){
-        const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-        const path = `profiles/${user.id}.${ext}`;
-        const { error: upErr } = await sb.storage.from(SUPABASE_BUCKET).upload(path, file, { upsert: true, cacheControl: '3600' });
-        if (upErr) throw upErr;
-        const { data: pub } = sb.storage.from(SUPABASE_BUCKET).getPublicUrl(path);
-        photo_url = pub.publicUrl;
-      }
-      const payload = {
-        id: user.id,
-        username: (joinUsername && joinUsername.value || '').trim(),
-        from: (joinFrom && joinFrom.value || '').trim(),
-        greeting: (joinGreeting && joinGreeting.value || '').trim()
-      };
-      if (photo_url) payload.photo_url = photo_url;
-      const { data, error } = await sb.from('profiles').upsert(payload).select().single();
-      if (error) throw error;
-      if (profileCard) profileCard.classList.remove('hidden');
-      if (profileUsername) profileUsername.textContent = data.username || '';
-      if (profileFrom) profileFrom.textContent = data.from || '';
-      if (profileGreeting) profileGreeting.textContent = data.greeting || '';
-      if (profilePhoto){
-        if (data.photo_url){ profilePhoto.src = data.photo_url; profilePhoto.classList.remove('hidden'); }
-        else { profilePhoto.src = ''; profilePhoto.classList.add('hidden'); }
-      }
-      close(joinOverlay);
-      alert('Profile saved. You can now post your trip!');
-    }catch(err){
-      console.error(err);
-      alert('Could not save profile. Check console.');
-    }
+  // After OAuth returns
+  sb.auth.onAuthStateChange((ev, s) => {
+    if (ev === 'SIGNED_IN'){ close(authOverlay); open(joinOverlay); }
   });
 
-  sb.auth.onAuthStateChange((ev, s)=>{ if (ev==='SIGNED_IN'){ close(authOverlay); open(joinOverlay); } });
+  // Profile overlay
+  joinCancel && joinCancel.addEventListener('click', () => close(joinOverlay));
+  async function upsertProfile(uid, username, from, greeting, file){
+    let photo_url = null;
+    if (file){
+      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+      const path = `profiles/${uid}.${ext}`;
+      const { error: upErr } = await sb.storage.from(SUPABASE_BUCKET).upload(path, file, { upsert: true, cacheControl: '3600' });
+      if (upErr) throw upErr;
+      const { data: pub } = sb.storage.from(SUPABASE_BUCKET).getPublicUrl(path);
+      photo_url = pub.publicUrl;
+    }
+    const payload = { id: uid, username, from, greeting };
+    if (photo_url) payload.photo_url = photo_url;
+    const { data, error } = await sb.from('profiles').upsert(payload).select().single();
+    if (error) throw error;
+    return data;
+  }
+
+  joinForm && joinForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const me = await user();
+    if (!me){ open(authOverlay); return; }
+    try{
+      const prof = await upsertProfile(
+        me.id,
+        (joinUsername && joinUsername.value || '').trim(),
+        (joinFrom && joinFrom.value || '').trim(),
+        (joinGreeting && joinGreeting.value || '').trim(),
+        (joinPhoto && joinPhoto.files && joinPhoto.files[0]) || null
+      );
+      // update small card
+      if (profileCard){
+        profileCard.classList.remove('hidden');
+        if (profileUsername) profileUsername.textContent = prof.username || '';
+        if (profileFrom) profileFrom.textContent = prof.from || '';
+        if (profileGreeting) profileGreeting.textContent = prof.greeting || '';
+        if (profilePhoto){
+          if (prof.photo_url){ profilePhoto.src = prof.photo_url; profilePhoto.classList.remove('hidden'); }
+          else { profilePhoto.src = ''; profilePhoto.classList.add('hidden'); }
+        }
+      }
+      close(joinOverlay);
+      alert('Profile saved!');
+    }catch(err){
+      console.error(err);
+      alert('Could not save profile.');
+    }
+  });
 })();
 </script>
 
