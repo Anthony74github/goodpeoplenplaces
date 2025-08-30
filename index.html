@@ -91,12 +91,6 @@
             background-position: center;
         }
     </style>
-
-    <!-- Leaflet (for English-labeled basemap) -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-gray-50 text-gray-800">
     <!-- Hero Section with image set via CSS background -->
@@ -199,7 +193,7 @@
                         <!-- Map container now appears on the right side on larger screens. -->
                         <div id="map-container" class="relative w-full md:w-1/2 h-48 md:h-60 bg-blue-50 rounded-lg overflow-hidden order-1 md:order-2">
                             <!-- Replace the static map and marker with an interactive OpenStreetMap embed.  The iframe will be updated via JavaScript when a country is selected. -->
-                            <div id="osm-map" class="absolute inset-0 w-full h-full"></div>
+                            <iframe id="osm-map" class="absolute inset-0 w-full h-full" frameborder="0" scrolling="no" src="" style="border:0;"></iframe>
                         </div>
                     </div>
                 </div>
@@ -255,7 +249,6 @@
                                 <option value="directions">Directions</option>
                             </select>
                             <ul id="essential-phrases-list" class="list-disc list-inside space-y-1 text-gray-700"></ul>
-<p id="phrases-note" class="text-xs text-gray-600 mt-2 hidden"></p>
                         </div>
                     </div>
                 </div>
@@ -345,9 +338,9 @@
                     </div>
                     <!-- IP Address Checker Tool -->
                     <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl border border-gray-200 transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl text-center">
-                        <h3 class="text-2xl font-semibold mb-4 text-blue-600">Your Public IP Address</h3>
+                        <h3 class="text-2xl font-semibold mb-4 text-blue-600">Check My IP Address</h3>
                         <button id="get-ip-btn" class="button-gradient text-white py-2 px-6 rounded-md shadow-md hover:scale-105 transition duration-300 mb-4">Get My IP</button>
-                        <p id="ip-address-display" class="text-lg font-medium text-gray-800">Your public IP address will appear here.</p>
+                        <p id="ip-address-display" class="text-lg font-medium text-gray-800">Your IP address will appear here.</p>
                     </div>
                 </div>
             </div>
@@ -454,6 +447,17 @@
             <!-- Added handshake emoji to foster a sense of connection and sharing -->
             <h2 class="text-3xl md:text-4xl font-bold mb-8 text-center text-gray-900">Share Your Trip 🤝</h2>
             <p class="text-lg md:text-xl text-gray-700 mb-8 text-center">Upload a photo and tell us about your past or planned travels!</p>
+        <!-- Join control (centered) + small profile display -->
+        <div class="text-center mb-6">
+          <button id="join-btn" class="button-gradient inline-block px-6 py-2 rounded-md shadow-md hover:scale-105 transition duration-300">Join</button>
+        </div>
+        <div id="profile-card" class="max-w-md mx-auto mb-6 hidden text-center">
+          <img id="profile-photo" class="w-16 h-16 rounded-full object-cover mx-auto mb-2 hidden" alt="Profile">
+          <div id="profile-username" class="font-semibold"></div>
+          <div id="profile-from" class="text-sm text-gray-600"></div>
+          <div id="profile-greeting" class="text-sm text-gray-700 italic"></div>
+        </div>
+        
             <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl border border-gray-200 transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl mb-10">
                 <form id="comment-form" class="space-y-4">
                     <div class="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0">
@@ -4003,35 +4007,18 @@
                 // Update the embedded OpenStreetMap iframe.  A bounding box centred on the country
                 // coordinates provides an appropriate zoom level.  The marker parameter pins the
                 // selected destination on the map.  If the iframe element exists, set its src.
-                
-                // Initialize or update a Leaflet map using an English-labeled basemap.
-                // We use Carto's "light_all" tiles which label places in English.
-                if (!window._leafletMap) {
-                    const el = document.getElementById('osm-map');
-                    if (el) {
-                        window._leafletMap = L.map(el, { zoomControl: true });
-                        window._leafletTileLayer = L.tileLayer(
-                            'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-                            {
-                                attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
-                            }
-                        ).addTo(window._leafletMap);
-                        window._leafletMarker = L.marker([0,0]).addTo(window._leafletMap);
-                    }
-                }
-                if (window._leafletMap) {
+                const mapIframe = document.getElementById('osm-map');
+                if (mapIframe) {
                     const lat  = geo.lat;
                     const lon  = geo.lon;
-                    // Fit to a loose bounding box around the destination for a similar zoom effect
-                    const latDiff = 5, lonDiff = 5;
-                    const bounds = L.latLngBounds(
-                        [lat - latDiff, lon - lonDiff],
-                        [lat + latDiff, lon + lonDiff]
-                    );
-                    window._leafletMap.fitBounds(bounds);
-                    window._leafletMarker.setLatLng([lat, lon]);
+                    const latDiff = 5;
+                    const lonDiff = 5;
+                    const bbox = [
+                        lon - lonDiff, lat - latDiff,
+                        lon + lonDiff, lat + latDiff
+                    ].join(',');
+                    mapIframe.src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lon}`;
                 }
-
                 // Build the location and climate description inside the shaded box.  Headings remain
                 // centred with extra spacing below, while the text paragraphs are left‑aligned for
                 // readability.
@@ -4071,17 +4058,6 @@
                 categorySelect.value = 'greetings';
             }
             renderEssentialPhrasesForCategory();
-            const phrasesNoteEl = document.getElementById('phrases-note');
-            if (phrasesNoteEl) {
-                if (countryName === 'Thailand') {
-                    phrasesNoteEl.textContent = 'Generally, females use "ka" and males use "krap" after some statements or questions to be more polite.';
-                    phrasesNoteEl.classList.remove('hidden');
-                } else {
-                    phrasesNoteEl.textContent = '';
-                    phrasesNoteEl.classList.add('hidden');
-                }
-            }
-
             // Emergency contacts (display numbers in red) and U.S. Embassy info in purple
             emergencyList.innerHTML = '';
             data.emergencyContacts.forEach(contact => {
@@ -4597,7 +4573,7 @@ function renderEssentialPhrasesForCategory() {
             try {
                 const res = await fetch('https://api.ipify.org?format=json');
                 const data = await res.json();
-                ipAddressDisplay.textContent = `Your public IP address: ${data.ip}`;
+                ipAddressDisplay.textContent = `Your IP address: ${data.ip}`;
             } catch (err) {
                 ipAddressDisplay.textContent = 'Unable to fetch IP.';
             }
@@ -4629,14 +4605,7 @@ function renderEssentialPhrasesForCategory() {
                 html += `<p class="text-sm text-gray-500 mb-1">${country}</p>`;
                 html += `<h4 class="font-semibold text-lg mb-1">${name || 'Anonymous'}</h4>`;
                 html += `<p class="text-gray-700">${text}</p>`;
-                html += `<div class=\"flex justify-end\"><button type=\"button\" class=\"delete-comment-btn text-red-600 text-sm underline mt-3\">Delete</button></div>`;
                 card.innerHTML = html;
-                const delBtn = card.querySelector('.delete-comment-btn');
-                if (delBtn) {
-                    delBtn.addEventListener('click', () => {
-                        if (confirm('Delete this post?')) { card.remove(); }
-                    });
-                }
                 commentsDisplay.prepend(card);
             };
             if (file) {
@@ -4769,17 +4738,6 @@ function renderEssentialPhrasesForCategory() {
             if (essentialPhraseCategorySelect) {
                 essentialPhraseCategorySelect.addEventListener('change', () => {
                     renderEssentialPhrasesForCategory();
-            const phrasesNoteEl = document.getElementById('phrases-note');
-            if (phrasesNoteEl) {
-                if (countryName === 'Thailand') {
-                    phrasesNoteEl.textContent = 'Generally, females use "ka" and males use "krap" after some statements or questions to be more polite.';
-                    phrasesNoteEl.classList.remove('hidden');
-                } else {
-                    phrasesNoteEl.textContent = '';
-                    phrasesNoteEl.classList.add('hidden');
-                }
-            }
-
                 });
             }
 
@@ -4808,273 +4766,7 @@ function renderEssentialPhrasesForCategory() {
                     // Insert a line break after each label to ensure items appear on separate lines in the downloaded file
                     let content = packingListEditable.innerHTML;
                     content = content.replace(/<\/label>/g, '</label><br>');
-                    const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Packing List</title></head><body>${content}
-<!-- Auth Modal (Google or Email) -->
-<div id="auth-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-[1000] hidden items-center justify-center">
-  <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl w-[92%] max-w-md">
-    <h3 class="text-xl font-semibold mb-3 text-center text-blue-600">Sign in to Join</h3>
-    <p class="text-sm text-gray-700 text-center mb-4">Use Google or enter your email for a login link.</p>
-    <div class="space-y-3">
-      <button id="login-google" class="w-full button-gradient text-white py-2 px-6 rounded-md shadow-md">Continue with Google</button>
-      <div>
-        <label class="block text-sm font-semibold mb-1" for="login-email">Email</label>
-        <input id="login-email" type="email" class="w-full p-3 border border-gray-300 rounded-md" placeholder="you@example.com">
-      </div>
-      <button id="login-email-btn" class="w-full bg-blue-600 text-white py-2 rounded-md shadow hover:opacity-90">Send Login Link</button>
-      <button id="auth-cancel" class="w-full mt-1 text-gray-600 hover:underline">Cancel</button>
-    </div>
-  </div>
-</div>
-
-
-<!-- Supabase constants -->
-<script>
-  window.SUPABASE_URL = 'https://gxgmvrjjmbcrujpugnym.supabase.co';
-  window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4Z212cmpqbWJjcnVqcHVnbnltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NjYxOTgsImV4cCI6MjA3MjE0MjE5OH0.7W9OhkJ1_s_lddO4uIZ4qzBbko3TcY-r6UeGDPPQ4zY';
-  window.SUPABASE_BUCKET = 'trip-photos';
-</script>
-
-
-<!-- BEGIN Supabase integration: auth + profile + posts (non-destructive) -->
-<script>
-(function(){
-  const URL = window.SUPABASE_URL;
-  const KEY = window.SUPABASE_ANON_KEY;
-  const BUCKET = window.SUPABASE_BUCKET || 'trip-photos';
-  if (!window.supabase || !window.supabase.createClient) return console.error('Supabase client script missing');
-
-  const sb = window.supabase.createClient(URL, KEY);
-
-  function $(id){ return document.getElementById(id); }
-  function show(el){ el && el.classList.remove('hidden'); }
-  function hide(el){ el && el.classList.add('hidden'); }
-  function escapeHtml(s){ const d=document.createElement('div'); d.innerText=String(s??''); return d.innerHTML; }
-
-  const joinBtn = $('join-btn');
-  const joinOverlay = $('join-overlay');
-  const joinForm = $('join-form');
-  const profileCard = $('profile-card');
-  const profilePhoto = $('profile-photo');
-  const profileUsername = $('profile-username');
-  const profileFrom = $('profile-from');
-  const profileGreeting = $('profile-greeting');
-
-  const authOverlay = $('auth-overlay');
-  const loginGoogleBtn = $('login-google');
-  const loginEmailBtn = $('login-email-btn');
-  const loginEmailInput = $('login-email');
-  const authCancelBtn = $('auth-cancel');
-
-  const form = $('comment-form');
-  const nameEl = $('comment-name');
-  const countryEl = $('comment-country');
-  const textEl = $('comment-text');
-  const fileEl = $('comment-photo');
-  const feed = $('comments-display');
-
-  function openAuth(){ if(authOverlay){ authOverlay.classList.remove('hidden'); authOverlay.classList.add('flex'); } }
-  function closeAuth(){ if(authOverlay){ authOverlay.classList.add('hidden'); authOverlay.classList.remove('flex'); } }
-
-  async function requireSession(){
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session){ openAuth(); throw new Error('no_session'); }
-    return session;
-  }
-
-  async function currentUser(){ const { data: { user } } = await sb.auth.getUser(); return user; }
-
-  async function fetchProfile(uid){
-    const { data, error } = await sb.from('profiles').select('id,username,from,greeting,photo_url').eq('id', uid).single();
-    return data || null;
-  }
-
-  function renderProfile(p){
-    if (!profileCard) return;
-    if (p){
-      show(profileCard);
-      if (profileUsername) profileUsername.textContent = p.username || '';
-      if (profileFrom) profileFrom.textContent = p.from || '';
-      if (profileGreeting) profileGreeting.textContent = p.greeting || '';
-      if (profilePhoto){
-        if (p.photo_url){ profilePhoto.src = p.photo_url; profilePhoto.classList.remove('hidden'); }
-        else { profilePhoto.src = ''; profilePhoto.classList.add('hidden'); }
-      }
-    } else {
-      hide(profileCard);
-      if (profilePhoto){ profilePhoto.src=''; profilePhoto.classList.add('hidden'); }
-      if (profileUsername) profileUsername.textContent = '';
-      if (profileFrom) profileFrom.textContent = '';
-      if (profileGreeting) profileGreeting.textContent = '';
-    }
-  }
-
-  async function upsertProfile(uid, username, from, greeting, file){
-    let photo_url = null;
-    if (file){
-      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-      const path = `profiles/${uid}.${ext}`;
-      const { error: upErr } = await sb.storage.from(BUCKET).upload(path, file, { upsert: true, cacheControl: '3600' });
-      if (upErr) throw upErr;
-      const { data: pub } = sb.storage.from(BUCKET).getPublicUrl(path);
-      photo_url = pub.publicUrl;
-    }
-    const payload = { id: uid, username, from, greeting };
-    if (photo_url) payload.photo_url = photo_url;
-    const { data, error } = await sb.from('profiles').upsert(payload).select().single();
-    if (error) throw error;
-    return data;
-  }
-
-  async function listPosts(){
-    const { data, error } = await sb
-      .from('posts')
-      .select('id,user_id,name,country,text,photo_url,created_at')
-      .order('created_at', { ascending: false })
-      .limit(100);
-    if (error) throw error;
-    return data || [];
-  }
-
-  async function listProfiles(ids){
-    if (!ids.length) return [];
-    const { data, error } = await sb.from('profiles').select('id,username,from,greeting,photo_url').in('id', ids);
-    return data || [];
-  }
-
-  function renderPosts(items, profMap){
-    if (!feed) return;
-    feed.innerHTML = '';
-    if (!items.length){
-      feed.innerHTML = '<div class="text-sm text-gray-500">Be the first to share a trip!</div>';
-      return;
-    }
-    items.forEach(p => {
-      const prof = profMap.get(p.user_id) || {};
-      const card = document.createElement('div');
-      card.className = 'p-4 bg-white rounded-lg shadow-xl border border-gray-200 transform transition duration-300 hover:-translate-y-1 hover:shadow-2xl';
-
-      const top = document.createElement('div');
-      top.className = 'flex items-center mb-2';
-      if (prof.photo_url){
-        const img = document.createElement('img');
-        img.className = 'w-10 h-10 rounded-full object-cover border border-gray-300 mr-2';
-        img.src = prof.photo_url; img.alt = 'Profile';
-        top.appendChild(img);
-      }
-      const txt = document.createElement('div'); txt.className = 'text-sm';
-      const u = document.createElement('div'); u.className = 'font-semibold'; u.textContent = prof.username || p.name || 'Traveler'; txt.appendChild(u);
-      if (prof.from){ const f = document.createElement('div'); f.className='text-gray-600'; f.textContent = prof.from; txt.appendChild(f); }
-      if (prof.greeting){ const g = document.createElement('div'); g.className='text-gray-700'; g.textContent = prof.greeting; txt.appendChild(g); }
-      top.appendChild(txt);
-      card.appendChild(top);
-
-      if (p.photo_url){
-        const im = document.createElement('img');
-        im.className = 'w-full h-48 object-cover rounded mb-3';
-        im.src = p.photo_url; im.alt = 'User uploaded photo';
-        card.appendChild(im);
-      }
-      if (p.country){ const c = document.createElement('p'); c.className='text-sm text-gray-500 mb-1'; c.textContent = p.country; card.appendChild(c); }
-      const h = document.createElement('h4'); h.className='font-semibold text-lg mb-1'; h.textContent = p.name || prof.username || 'Traveler'; card.appendChild(h);
-      if (p.text){ const t = document.createElement('p'); t.className='text-gray-700'; t.textContent = p.text; card.appendChild(t); }
-      feed.appendChild(card);
-    });
-  }
-
-  async function refreshFeed(){
-    try {
-      const items = await listPosts();
-      const ids = Array.from(new Set(items.map(i => i.user_id).filter(Boolean)));
-      const profs = await listProfiles(ids);
-      const map = new Map(profs.map(p => [p.id, p]));
-      renderPosts(items, map);
-    } catch (e) {
-      if (feed) feed.innerHTML = '<div class="text-sm text-red-600">Error loading posts.</div>';
-      console.error(e);
-    }
-  }
-
-  // Events
-  joinBtn && joinBtn.addEventListener('click', async () => {
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session){ openAuth(); return; }
-    joinOverlay && joinOverlay.classList.remove('hidden');
-  });
-
-  loginGoogleBtn && loginGoogleBtn.addEventListener('click', async () => {
-    const redirectTo = location.origin;
-    await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } });
-  });
-  loginEmailBtn && loginEmailBtn.addEventListener('click', async () => {
-    const email = (loginEmailInput?.value || '').trim();
-    if (!email) return alert('Enter your email');
-    const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin } });
-    if (error) alert(error.message); else { alert('Check your email for the login link!'); closeAuth(); }
-  });
-  authCancelBtn && authCancelBtn.addEventListener('click', closeAuth);
-
-  // Profile form submit
-  joinForm && joinForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    try {
-      const { data: { user } } = await sb.auth.getUser();
-      if (!user){ openAuth(); return; }
-      const username = (document.getElementById('join-username')?.value || '').trim();
-      const from = (document.getElementById('join-from')?.value || '').trim();
-      const greeting = (document.getElementById('join-greeting')?.value || '').trim();
-      const file = document.getElementById('join-photo')?.files?.[0] || null;
-      const prof = await upsertProfile(user.id, username, from, greeting, file);
-      renderProfile(prof);
-      if ($('comment-name')){ $('comment-name').value = prof.username || ''; $('comment-name').readOnly = true; }
-      joinOverlay && joinOverlay.classList.add('hidden');
-    } catch (e){ alert('Could not save profile'); console.error(e); }
-  });
-
-  // Posting
-  form && form.addEventListener('submit', async (e) => {
-    // Only intercept if we can post via Supabase
-    e.preventDefault();
-    try {
-      const { data: { user } } = await sb.auth.getUser();
-      if (!user){ openAuth(); return; }
-      const name = (nameEl?.value || '').trim();
-      const country = (countryEl?.value || '').trim();
-      const text = (textEl?.value || '').trim();
-      const file = fileEl?.files?.[0] || null;
-      if (!file || !text){ alert('Please add one photo and a comment.'); return; }
-
-      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-      const path = `posts/${user.id}/${Date.now()}.${ext}`;
-      const { error: upErr } = await sb.storage.from(BUCKET).upload(path, file, { upsert: false, cacheControl: '3600' });
-      if (upErr) throw upErr;
-      const { data: pub } = sb.storage.from(BUCKET).getPublicUrl(path);
-      const photo_url = pub.publicUrl;
-
-      const { error: insErr } = await sb.from('posts').insert({ user_id: user.id, name, country, text, photo_url });
-      if (insErr) throw insErr;
-
-      form.reset();
-      await refreshFeed();
-    } catch (e){ alert('Post failed'); console.error(e); }
-  }, true);
-
-  // Boot
-  document.addEventListener('DOMContentLoaded', async () => {
-    try {
-      const { data: { user } } = await sb.auth.getUser();
-      if (user){
-        const prof = await fetchProfile(user.id);
-        renderProfile(prof);
-        if ($('comment-name') && prof){ $('comment-name').value = prof.username || ''; $('comment-name').readOnly = true; }
-      }
-      await refreshFeed();
-    } catch (e){ console.error(e); }
-  });
-})();
-</script>
-<!-- END Supabase integration -->
-
-</body></html>`;
+                    const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Packing List</title></head><body>${content}</body></html>`;
                     const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
                     const url = URL.createObjectURL(blob);
                     const link = document.createElement('a');
