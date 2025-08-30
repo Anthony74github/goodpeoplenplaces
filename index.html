@@ -30,6 +30,8 @@
     <title>Good People n Places</title>
     <!-- Include Tailwind CSS via CDN for rapid styling -->
     <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Supabase JS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -91,7 +93,6 @@
             background-position: center;
         }
     </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-gray-50 text-gray-800">
     <!-- Hero Section with image set via CSS background -->
@@ -447,18 +448,6 @@
         <div class="container mx-auto max-w-6xl">
             <!-- Added handshake emoji to foster a sense of connection and sharing -->
             <h2 class="text-3xl md:text-4xl font-bold mb-8 text-center text-gray-900">Share Your Trip 🤝</h2>
-<!-- Join CTA (centered, minimal) -->
-<div class="text-center my-4">
-  <button id="join-btn" class="button-gradient inline-block px-6 py-2 rounded-md shadow-md hover:scale-105 transition duration-300">Join</button>
-</div>
-<!-- Small profile card -->
-<div id="profile-card" class="max-w-md mx-auto mb-6 hidden text-center">
-  <img id="profile-photo" class="w-16 h-16 rounded-full object-cover mx-auto mb-2 hidden" alt="Profile">
-  <div id="profile-username" class="font-semibold"></div>
-  <div id="profile-from" class="text-sm text-gray-600"></div>
-  <div id="profile-greeting" class="text-sm text-gray-700 italic"></div>
-</div>
-
             <p class="text-lg md:text-xl text-gray-700 mb-8 text-center">Upload a photo and tell us about your past or planned travels!</p>
             <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl border border-gray-200 transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl mb-10">
                 <form id="comment-form" class="space-y-4">
@@ -521,6 +510,10 @@
 
     <!-- JavaScript for dynamic behaviour -->
     <script>
+      const SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRtY3hidGRqamd3Zm9xZGZqdXBuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0OTcyMzEsImV4cCI6MjA3MjA3MzIzMX0.h_qa51FcNT6P62AQoJjjoef7Qv2QD3h3LYBJWua0-Po';
+const SUPABASE_BUCKET = 'trip-photos';
+const API_BASE = ''; // same-origin API on Vercel
         // Country data: a small sample of destinations with history, attractions, foods and practical information.
         const countriesData = {
             'Australia': {
@@ -4768,8 +4761,7 @@ function renderEssentialPhrasesForCategory() {
                     // Insert a line break after each label to ensure items appear on separate lines in the downloaded file
                     let content = packingListEditable.innerHTML;
                     content = content.replace(/<\/label>/g, '</label><br>');
-                    const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Packing List</title></head><body>${content}
-<!-- Auth Modal (email OTP or Google) -->
+                    const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Packing List</title></head><body>${content}<!-- Auth Modal (email OTP or Google) -->
 <div id="auth-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden items-center justify-center">
   <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl w-[92%] max-w-md">
     <h3 class="text-xl font-semibold mb-3 text-center text-blue-600">Sign in to Join</h3>
@@ -4785,8 +4777,6 @@ function renderEssentialPhrasesForCategory() {
     </div>
   </div>
 </div>
-
-
 <!-- Profile Setup Modal -->
 <div id="join-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden items-center justify-center">
   <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl w-[92%] max-w-md">
@@ -4816,27 +4806,13 @@ function renderEssentialPhrasesForCategory() {
     </form>
   </div>
 </div>
-
-
-<!-- Supabase constants -->
+<!-- Join/Auth/Profile wiring (minimal, namespaced) -->
 <script>
-  const SUPABASE_URL = 'https://gxgmvrjjmbcrujpugnym.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4Z212cmpqbWJjcnVqcHVnbnltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NjYxOTgsImV4cCI6MjA3MjE0MjE5OH0.7W9OhkJ1_s_lddO4uIZ4qzBbko3TcY-r6UeGDPPQ4zY';
-  const SUPABASE_BUCKET = 'trip-photos';
-  const API_BASE = '';
-</script>
-
-
-<!-- GPnP Join Wiring (namespaced, minimal) -->
-<script>
-(function gpnpJoin(){
-  if (window.__gpnpJoin) return; window.__gpnpJoin = true;
-
-  // Require Supabase
+(function(){
+  if (window.__gpnpJoinOnly) return; window.__gpnpJoinOnly = true;
   if (!window.supabase || !window.supabase.createClient) { console.error('Supabase JS missing'); return; }
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // Elements
   const $ = (id) => document.getElementById(id);
   const joinBtn = $('join-btn');
   const authOverlay = $('auth-overlay');
@@ -4862,13 +4838,13 @@ function renderEssentialPhrasesForCategory() {
   function open(el){ el && (el.classList.remove('hidden'), el.classList.add('flex')); }
   function close(el){ el && (el.classList.add('hidden'), el.classList.remove('flex')); }
 
-  async function session(){ const { data: { session } } = await sb.auth.getSession(); return session; }
-  async function user(){ const { data: { user } } = await sb.auth.getUser(); return user; }
+  async function hasSession(){ const { data: { session } } = await sb.auth.getSession(); return !!session; }
+  async function currentUser(){ const { data: { user } } = await sb.auth.getUser(); return user; }
 
-  // Join button
+  // Join button logic
   joinBtn && joinBtn.addEventListener('click', async () => {
-    const s = await session();
-    if (!s) open(authOverlay); else open(joinOverlay);
+    const signedIn = await hasSession();
+    if (!signedIn) open(authOverlay); else open(joinOverlay);
   });
 
   // Auth overlay
@@ -4883,13 +4859,12 @@ function renderEssentialPhrasesForCategory() {
     if (error) alert(error.message); else { alert('Magic link sent!'); close(authOverlay); }
   });
 
-  // After OAuth returns
-  sb.auth.onAuthStateChange((ev, s) => {
+  // On sign-in return, open profile setup
+  sb.auth.onAuthStateChange((ev, session) => {
     if (ev === 'SIGNED_IN'){ close(authOverlay); open(joinOverlay); }
   });
 
-  // Profile overlay
-  joinCancel && joinCancel.addEventListener('click', () => close(joinOverlay));
+  // Profile save
   async function upsertProfile(uid, username, from, greeting, file){
     let photo_url = null;
     if (file){
@@ -4907,9 +4882,10 @@ function renderEssentialPhrasesForCategory() {
     return data;
   }
 
+  joinCancel && joinCancel.addEventListener('click', () => close(joinOverlay));
   joinForm && joinForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const me = await user();
+    const me = await currentUser();
     if (!me){ open(authOverlay); return; }
     try{
       const prof = await upsertProfile(
@@ -4919,7 +4895,6 @@ function renderEssentialPhrasesForCategory() {
         (joinGreeting && joinGreeting.value || '').trim(),
         (joinPhoto && joinPhoto.files && joinPhoto.files[0]) || null
       );
-      // update small card
       if (profileCard){
         profileCard.classList.remove('hidden');
         if (profileUsername) profileUsername.textContent = prof.username || '';
@@ -4939,7 +4914,6 @@ function renderEssentialPhrasesForCategory() {
   });
 })();
 </script>
-
 </body></html>`;
                     const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
                     const url = URL.createObjectURL(blob);
