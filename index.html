@@ -5180,7 +5180,18 @@ function renderEssentialPhrasesForCategory() {
         // without cropping or stretching.  The aspect ratio of the wrapper is chosen
         // based on the natural dimensions of the uploaded image.
         var wrap = document.createElement('div');
+        // Wrapper for the uploaded image.  Give it a reduced width and centered positioning
+        // so that uploaded photos consume less space on the page (about a quarter of the
+        // previous area) while still preserving the chosen aspect ratio.  The aspect
+        // ratio is set later based on the natural dimensions of the image.
         wrap.className = 'relative w-full rounded mb-3 overflow-hidden';
+        // Reduce the overall footprint of the image by setting the wrapper's width to
+        // half of the available width.  Combined with the aspect ratio height, this
+        // yields roughly one‑quarter of the original area.  Center the wrapper using
+        // auto margins on the left and right.
+        wrap.style.width = '50%';
+        wrap.style.marginLeft = 'auto';
+        wrap.style.marginRight = 'auto';
         var img = document.createElement('img');
         img.src = c.photo;
         img.alt = 'User uploaded photo';
