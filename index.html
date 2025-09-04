@@ -30,8 +30,6 @@
     <title>Good People n Places</title>
     <!-- Include Tailwind CSS via CDN for rapid styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Supabase JS SDK -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -93,6 +91,11 @@
             background-position: center;
         }
     </style>
+
+    <!-- Leaflet (for English-labeled basemap) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
 </head>
 <body class="bg-gray-50 text-gray-800">
     <!-- Hero Section with image set via CSS background -->
@@ -195,7 +198,7 @@
                         <!-- Map container now appears on the right side on larger screens. -->
                         <div id="map-container" class="relative w-full md:w-1/2 h-48 md:h-60 bg-blue-50 rounded-lg overflow-hidden order-1 md:order-2">
                             <!-- Replace the static map and marker with an interactive OpenStreetMap embed.  The iframe will be updated via JavaScript when a country is selected. -->
-                            <iframe id="osm-map" class="absolute inset-0 w-full h-full" frameborder="0" scrolling="no" src="" style="border:0;"></iframe>
+                            <div id="osm-map" class="absolute inset-0 w-full h-full"></div>
                         </div>
                     </div>
                 </div>
@@ -251,6 +254,7 @@
                                 <option value="directions">Directions</option>
                             </select>
                             <ul id="essential-phrases-list" class="list-disc list-inside space-y-1 text-gray-700"></ul>
+<p id="phrases-note" class="text-base text-gray-600 mt-2 hidden"></p>
                         </div>
                     </div>
                 </div>
@@ -340,9 +344,9 @@
                     </div>
                     <!-- IP Address Checker Tool -->
                     <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl border border-gray-200 transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl text-center">
-                        <h3 class="text-2xl font-semibold mb-4 text-blue-600">Check My IP Address</h3>
+                        <h3 class="text-2xl font-semibold mb-4 text-blue-600">Your Public IP Address</h3>
                         <button id="get-ip-btn" class="button-gradient text-white py-2 px-6 rounded-md shadow-md hover:scale-105 transition duration-300 mb-4">Get My IP</button>
-                        <p id="ip-address-display" class="text-lg font-medium text-gray-800">Your IP address will appear here.</p>
+                        <p id="ip-address-display" class="text-lg font-medium text-gray-800">Your public IP address will appear here.</p>
                     </div>
                 </div>
             </div>
@@ -448,6 +452,23 @@
         <div class="container mx-auto max-w-6xl">
             <!-- Added handshake emoji to foster a sense of connection and sharing -->
             <h2 class="text-3xl md:text-4xl font-bold mb-8 text-center text-gray-900">Share Your Trip 🤝</h2>
+            <div class="flex justify-center mt-4 space-x-4">
+                <!-- Join button allows new visitors to register an account.  It opens the registration modal. -->
+                <button id="join-btn" class="button-gradient text-white py-2 px-6 rounded-md shadow-md hover:scale-105 transition duration-300">Join</button>
+                <!-- Login button opens a separate modal where existing users can authenticate using their username and password. -->
+                <button id="login-btn" class="button-gradient text-white py-2 px-6 rounded-md shadow-md hover:scale-105 transition duration-300">Login</button>
+            </div>
+<div id="profile-card" class="max-w-md mx-auto mt-4 bg-white rounded-lg shadow border border-gray-200 p-4 hidden">
+  <div class="flex items-center">
+    <img id="profile-photo" class="w-14 h-14 rounded-full object-cover border border-gray-300 mr-3 hidden" alt="Profile">
+    <div>
+      <div id="profile-username" class="font-semibold text-gray-900"></div>
+      <div id="profile-from" class="text-gray-600 text-sm"></div>
+      <div id="profile-greeting" class="text-gray-700 text-sm"></div>
+    </div>
+    <button id="logout-btn" class="ml-auto text-sm text-blue-600 hover:underline">Log out</button>
+  </div>
+</div>
             <p class="text-lg md:text-xl text-gray-700 mb-8 text-center">Upload a photo and tell us about your past or planned travels!</p>
             <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl border border-gray-200 transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl mb-10">
                 <form id="comment-form" class="space-y-4">
@@ -510,10 +531,6 @@
 
     <!-- JavaScript for dynamic behaviour -->
     <script>
-      const SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRtY3hidGRqamd3Zm9xZGZqdXBuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0OTcyMzEsImV4cCI6MjA3MjA3MzIzMX0.h_qa51FcNT6P62AQoJjjoef7Qv2QD3h3LYBJWua0-Po';
-const SUPABASE_BUCKET = 'trip-photos';
-const API_BASE = ''; // same-origin API on Vercel
         // Country data: a small sample of destinations with history, attractions, foods and practical information.
         const countriesData = {
             'Australia': {
@@ -4002,18 +4019,35 @@ const API_BASE = ''; // same-origin API on Vercel
                 // Update the embedded OpenStreetMap iframe.  A bounding box centred on the country
                 // coordinates provides an appropriate zoom level.  The marker parameter pins the
                 // selected destination on the map.  If the iframe element exists, set its src.
-                const mapIframe = document.getElementById('osm-map');
-                if (mapIframe) {
+                
+                // Initialize or update a Leaflet map using an English-labeled basemap.
+                // We use Carto's "light_all" tiles which label places in English.
+                if (!window._leafletMap) {
+                    const el = document.getElementById('osm-map');
+                    if (el) {
+                        window._leafletMap = L.map(el, { zoomControl: true });
+                        window._leafletTileLayer = L.tileLayer(
+                            'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+                            {
+                                attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+                            }
+                        ).addTo(window._leafletMap);
+                        window._leafletMarker = L.marker([0,0]).addTo(window._leafletMap);
+                    }
+                }
+                if (window._leafletMap) {
                     const lat  = geo.lat;
                     const lon  = geo.lon;
-                    const latDiff = 5;
-                    const lonDiff = 5;
-                    const bbox = [
-                        lon - lonDiff, lat - latDiff,
-                        lon + lonDiff, lat + latDiff
-                    ].join(',');
-                    mapIframe.src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lon}`;
+                    // Fit to a loose bounding box around the destination for a similar zoom effect
+                    const latDiff = 5, lonDiff = 5;
+                    const bounds = L.latLngBounds(
+                        [lat - latDiff, lon - lonDiff],
+                        [lat + latDiff, lon + lonDiff]
+                    );
+                    window._leafletMap.fitBounds(bounds);
+                    window._leafletMarker.setLatLng([lat, lon]);
                 }
+
                 // Build the location and climate description inside the shaded box.  Headings remain
                 // centred with extra spacing below, while the text paragraphs are left‑aligned for
                 // readability.
@@ -4053,6 +4087,17 @@ const API_BASE = ''; // same-origin API on Vercel
                 categorySelect.value = 'greetings';
             }
             renderEssentialPhrasesForCategory();
+            const phrasesNoteEl = document.getElementById('phrases-note');
+            if (phrasesNoteEl) {
+                if (countryName === 'Thailand') {
+                    phrasesNoteEl.textContent = 'Generally, females use "ka" and males use "krap" after some statements or questions to be more polite.';
+                    phrasesNoteEl.classList.remove('hidden');
+                } else {
+                    phrasesNoteEl.textContent = '';
+                    phrasesNoteEl.classList.add('hidden');
+                }
+            }
+
             // Emergency contacts (display numbers in red) and U.S. Embassy info in purple
             emergencyList.innerHTML = '';
             data.emergencyContacts.forEach(contact => {
@@ -4568,7 +4613,7 @@ function renderEssentialPhrasesForCategory() {
             try {
                 const res = await fetch('https://api.ipify.org?format=json');
                 const data = await res.json();
-                ipAddressDisplay.textContent = `Your IP address: ${data.ip}`;
+                ipAddressDisplay.textContent = `Your public IP address: ${data.ip}`;
             } catch (err) {
                 ipAddressDisplay.textContent = 'Unable to fetch IP.';
             }
@@ -4600,7 +4645,14 @@ function renderEssentialPhrasesForCategory() {
                 html += `<p class="text-sm text-gray-500 mb-1">${country}</p>`;
                 html += `<h4 class="font-semibold text-lg mb-1">${name || 'Anonymous'}</h4>`;
                 html += `<p class="text-gray-700">${text}</p>`;
+                html += `<div class=\"flex justify-end\"><button type=\"button\" class=\"delete-comment-btn text-red-600 text-sm underline mt-3\">Delete</button></div>`;
                 card.innerHTML = html;
+                const delBtn = card.querySelector('.delete-comment-btn');
+                if (delBtn) {
+                    delBtn.addEventListener('click', () => {
+                        if (confirm('Delete this post?')) { card.remove(); }
+                    });
+                }
                 commentsDisplay.prepend(card);
             };
             if (file) {
@@ -4733,6 +4785,17 @@ function renderEssentialPhrasesForCategory() {
             if (essentialPhraseCategorySelect) {
                 essentialPhraseCategorySelect.addEventListener('change', () => {
                     renderEssentialPhrasesForCategory();
+            const phrasesNoteEl = document.getElementById('phrases-note');
+            if (phrasesNoteEl) {
+                if (countryName === 'Thailand') {
+                    phrasesNoteEl.textContent = 'Generally, females use "ka" and males use "krap" after some statements or questions to be more polite.';
+                    phrasesNoteEl.classList.remove('hidden');
+                } else {
+                    phrasesNoteEl.textContent = '';
+                    phrasesNoteEl.classList.add('hidden');
+                }
+            }
+
                 });
             }
 
@@ -4761,160 +4824,7 @@ function renderEssentialPhrasesForCategory() {
                     // Insert a line break after each label to ensure items appear on separate lines in the downloaded file
                     let content = packingListEditable.innerHTML;
                     content = content.replace(/<\/label>/g, '</label><br>');
-                    const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Packing List</title></head><body>${content}<!-- Auth Modal (email OTP or Google) -->
-<div id="auth-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden items-center justify-center">
-  <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl w-[92%] max-w-md">
-    <h3 class="text-xl font-semibold mb-3 text-center text-blue-600">Sign in to Join</h3>
-    <p class="text-sm text-gray-700 text-center mb-4">Use Google or enter your email for a login link.</p>
-    <div class="space-y-3">
-      <button id="login-google" class="w-full button-gradient text-white py-2 px-6 rounded-md shadow-md">Continue with Google</button>
-      <div>
-        <label class="block text-sm font-semibold mb-1" for="login-email">Email</label>
-        <input id="login-email" type="email" class="w-full p-3 border border-gray-300 rounded-md" placeholder="you@example.com">
-      </div>
-      <button id="login-email-btn" class="w-full bg-blue-600 text-white py-2 rounded-md shadow hover:opacity-90">Send Login Link</button>
-      <button id="auth-cancel" class="w-full mt-1 text-gray-600 hover:underline">Cancel</button>
-    </div>
-  </div>
-</div>
-<!-- Profile Setup Modal -->
-<div id="join-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden items-center justify-center">
-  <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl w-[92%] max-w-md">
-    <h3 class="text-xl font-semibold mb-3 text-center text-blue-600">Set up your profile</h3>
-    <p class="text-sm text-gray-700 text-center mb-4">Add a username, where you’re from, a short greeting, and an optional profile photo.</p>
-    <form id="join-form" class="space-y-3">
-      <div>
-        <label class="block text-sm font-semibold mb-1" for="join-username">Username</label>
-        <input id="join-username" type="text" class="w-full p-3 border border-gray-300 rounded-md" maxlength="32" placeholder="Your display name" required>
-      </div>
-      <div>
-        <label class="block text-sm font-semibold mb-1" for="join-from">From</label>
-        <input id="join-from" type="text" class="w-full p-3 border border-gray-300 rounded-md" maxlength="64" placeholder="City, Country">
-      </div>
-      <div>
-        <label class="block text-sm font-semibold mb-1" for="join-greeting">Greeting</label>
-        <input id="join-greeting" type="text" class="w-full p-3 border border-gray-300 rounded-md" maxlength="120" placeholder="Short greeting">
-      </div>
-      <div>
-        <label class="block text-sm font-semibold mb-1" for="join-photo">Profile Photo</label>
-        <input id="join-photo" type="file" accept="image/*" class="w-full p-2 border border-gray-300 rounded-md">
-      </div>
-      <div class="flex justify-between items-center pt-1">
-        <button type="button" id="join-cancel" class="text-gray-600 hover:underline">Cancel</button>
-        <button type="submit" class="bg-blue-600 text-white py-2 px-4 rounded-md hover:opacity-90">Save and Continue</button>
-      </div>
-    </form>
-  </div>
-</div>
-<!-- Join/Auth/Profile wiring (minimal, namespaced) -->
-<script>
-(function(){
-  if (window.__gpnpJoinOnly) return; window.__gpnpJoinOnly = true;
-  if (!window.supabase || !window.supabase.createClient) { console.error('Supabase JS missing'); return; }
-  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-  const $ = (id) => document.getElementById(id);
-  const joinBtn = $('join-btn');
-  const authOverlay = $('auth-overlay');
-  const loginGoogle = $('login-google');
-  const loginEmailBtn = $('login-email-btn');
-  const loginEmail = $('login-email');
-  const authCancel = $('auth-cancel');
-
-  const joinOverlay = $('join-overlay');
-  const joinForm = $('join-form');
-  const joinCancel = $('join-cancel');
-  const joinUsername = $('join-username');
-  const joinFrom = $('join-from');
-  const joinGreeting = $('join-greeting');
-  const joinPhoto = $('join-photo');
-
-  const profileCard = $('profile-card');
-  const profilePhoto = $('profile-photo');
-  const profileUsername = $('profile-username');
-  const profileFrom = $('profile-from');
-  const profileGreeting = $('profile-greeting');
-
-  function open(el){ el && (el.classList.remove('hidden'), el.classList.add('flex')); }
-  function close(el){ el && (el.classList.add('hidden'), el.classList.remove('flex')); }
-
-  async function hasSession(){ const { data: { session } } = await sb.auth.getSession(); return !!session; }
-  async function currentUser(){ const { data: { user } } = await sb.auth.getUser(); return user; }
-
-  // Join button logic
-  joinBtn && joinBtn.addEventListener('click', async () => {
-    const signedIn = await hasSession();
-    if (!signedIn) open(authOverlay); else open(joinOverlay);
-  });
-
-  // Auth overlay
-  authCancel && authCancel.addEventListener('click', () => close(authOverlay));
-  loginGoogle && loginGoogle.addEventListener('click', async () => {
-    await sb.auth.signInWithOAuth({ provider:'google', options:{ redirectTo: window.location.origin } });
-  });
-  loginEmailBtn && loginEmailBtn.addEventListener('click', async () => {
-    const email = (loginEmail && loginEmail.value || '').trim();
-    if (!email){ alert('Enter your email'); return; }
-    const { error } = await sb.auth.signInWithOtp({ email, options:{ emailRedirectTo: window.location.origin } });
-    if (error) alert(error.message); else { alert('Magic link sent!'); close(authOverlay); }
-  });
-
-  // On sign-in return, open profile setup
-  sb.auth.onAuthStateChange((ev, session) => {
-    if (ev === 'SIGNED_IN'){ close(authOverlay); open(joinOverlay); }
-  });
-
-  // Profile save
-  async function upsertProfile(uid, username, from, greeting, file){
-    let photo_url = null;
-    if (file){
-      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-      const path = `profiles/${uid}.${ext}`;
-      const { error: upErr } = await sb.storage.from(SUPABASE_BUCKET).upload(path, file, { upsert: true, cacheControl: '3600' });
-      if (upErr) throw upErr;
-      const { data: pub } = sb.storage.from(SUPABASE_BUCKET).getPublicUrl(path);
-      photo_url = pub.publicUrl;
-    }
-    const payload = { id: uid, username, from, greeting };
-    if (photo_url) payload.photo_url = photo_url;
-    const { data, error } = await sb.from('profiles').upsert(payload).select().single();
-    if (error) throw error;
-    return data;
-  }
-
-  joinCancel && joinCancel.addEventListener('click', () => close(joinOverlay));
-  joinForm && joinForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const me = await currentUser();
-    if (!me){ open(authOverlay); return; }
-    try{
-      const prof = await upsertProfile(
-        me.id,
-        (joinUsername && joinUsername.value || '').trim(),
-        (joinFrom && joinFrom.value || '').trim(),
-        (joinGreeting && joinGreeting.value || '').trim(),
-        (joinPhoto && joinPhoto.files && joinPhoto.files[0]) || null
-      );
-      if (profileCard){
-        profileCard.classList.remove('hidden');
-        if (profileUsername) profileUsername.textContent = prof.username || '';
-        if (profileFrom) profileFrom.textContent = prof.from || '';
-        if (profileGreeting) profileGreeting.textContent = prof.greeting || '';
-        if (profilePhoto){
-          if (prof.photo_url){ profilePhoto.src = prof.photo_url; profilePhoto.classList.remove('hidden'); }
-          else { profilePhoto.src = ''; profilePhoto.classList.add('hidden'); }
-        }
-      }
-      close(joinOverlay);
-      alert('Profile saved!');
-    }catch(err){
-      console.error(err);
-      alert('Could not save profile.');
-    }
-  });
-})();
-</script>
-</body></html>`;
+                    const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Packing List</title></head><body>${content}</body></html>`;
                     const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
                     const url = URL.createObjectURL(blob);
                     const link = document.createElement('a');
@@ -4951,5 +4861,455 @@ function renderEssentialPhrasesForCategory() {
             }
         });
     </script>
+
+<!-- Join Modal -->
+<div id="join-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden items-center justify-center">
+  <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl w-[92%] max-w-md">
+    <h3 class="text-xl font-semibold mb-4 text-center text-blue-600">Create Your Profile</h3>
+    <form id="join-form" class="space-y-3">
+      <div>
+        <label class="block text-sm font-semibold mb-1" for="join-photo">Profile Picture</label>
+        <input id="join-photo" type="file" accept="image/*" class="w-full p-2 border border-gray-300 rounded-md">
+      </div>
+      <div>
+        <label class="block text-sm font-semibold mb-1" for="join-username">Username</label>
+        <input id="join-username" type="text" maxlength="30" class="w-full p-3 border border-gray-300 rounded-md" placeholder="e.g. SunnyTraveler" required>
+      </div>
+      <!-- New password field: users must supply a password so they can log back in on other devices. -->
+      <div>
+        <label class="block text-sm font-semibold mb-1" for="join-password">Password</label>
+        <input id="join-password" type="password" maxlength="60" class="w-full p-3 border border-gray-300 rounded-md" placeholder="Create a password" required>
+      </div>
+      <div>
+        <label class="block text-sm font-semibold mb-1" for="join-from">From</label>
+        <input id="join-from" type="text" maxlength="40" class="w-full p-3 border border-gray-300 rounded-md" placeholder="e.g. NYC, USA">
+      </div>
+      <div>
+        <label class="block text-sm font-semibold mb-1" for="join-greeting">Greeting</label>
+        <input id="join-greeting" type="text" maxlength="80" class="w-full p-3 border border-gray-300 rounded-md" placeholder="e.g. Happy to meet you all!">
+      </div>
+      <div class="flex justify-between items-center pt-2">
+        <button type="button" id="join-cancel" class="text-gray-600 hover:underline">Cancel</button>
+        <button type="submit" class="button-gradient text-white py-2 px-6 rounded-md shadow-md">Save & Continue</button>
+      </div>
+    </form>
+  </div>
+</div>
+<!-- Login Modal -->
+<div id="login-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden items-center justify-center">
+  <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl w-[92%] max-w-md">
+    <h3 class="text-xl font-semibold mb-4 text-center text-blue-600">Login to Your Profile</h3>
+    <form id="login-form" class="space-y-3">
+      <div>
+        <label class="block text-sm font-semibold mb-1" for="login-username">Username</label>
+        <input id="login-username" type="text" maxlength="30" class="w-full p-3 border border-gray-300 rounded-md" placeholder="Enter your username" required>
+      </div>
+      <div>
+        <label class="block text-sm font-semibold mb-1" for="login-password">Password</label>
+        <input id="login-password" type="password" maxlength="60" class="w-full p-3 border border-gray-300 rounded-md" placeholder="Enter your password" required>
+      </div>
+      <div class="flex justify-between items-center pt-2">
+        <button type="button" id="login-cancel" class="text-gray-600 hover:underline">Cancel</button>
+        <button type="submit" class="button-gradient text-white py-2 px-6 rounded-md shadow-md">Login</button>
+      </div>
+    </form>
+  </div>
+</div>
+<!-- Thailand note show/hide (once; larger font) -->
+<script>
+(function(){
+  function $(id){ return document.getElementById(id); }
+  function updateThaiNote(){
+    var note = $('phrases-note'), list = $('essential-phrases-list');
+    if (!note || !list) return;
+    try {
+      if (typeof selectedCountry !== 'undefined' && selectedCountry === 'Thailand') {
+        note.textContent = 'Generally, females use "ka" and males use "krap" after some statements or questions to be more polite.';
+        note.classList.remove('hidden');
+      } else {
+        note.textContent = '';
+        note.classList.add('hidden');
+      }
+    } catch (_) {}
+  }
+  document.addEventListener('change', function(e){
+    if (e.target && (e.target.id === 'country-select' || e.target.id === 'essential-phrase-category-select')) {
+      setTimeout(updateThaiNote, 0);
+    }
+  });
+  if (window.MutationObserver && document.getElementById('essential-phrases-list')) {
+    new MutationObserver(function(){ setTimeout(updateThaiNote, 0); })
+      .observe(document.getElementById('essential-phrases-list'), { childList: true });
+  }
+  window.addEventListener('DOMContentLoaded', function(){ setTimeout(updateThaiNote, 0); });
+})();
+</script>
+<!-- Join gating & profile header injection -->
+<script>
+(function(){
+  function $(id){ return document.getElementById(id); }
+  /*
+   * Users and comments are now stored in dedicated objects keyed off of
+   * the username.  This allows multiple accounts to coexist on a single
+   * device and makes it possible for users to authenticate themselves
+   * with a password.  Each user record contains the same fields as the
+   * legacy profileV2 structure (username, from, greeting, photoDataUrl)
+   * plus a password.  The currently logged in user is stored under
+   * `currentUser`.
+   */
+  function loadUsers(){ try { return JSON.parse(localStorage.getItem('usersV2') || '{}'); } catch(_) { return {}; } }
+  function saveUsers(u){ try { localStorage.setItem('usersV2', JSON.stringify(u)); } catch(_){} }
+  function getCurrentUser(){ try { return localStorage.getItem('currentUser') || null; } catch(_) { return null; } }
+  function setCurrentUser(u){ try { if (u) { localStorage.setItem('currentUser', u); } } catch(_){} }
+  function clearCurrentUser(){ try { localStorage.removeItem('currentUser'); } catch(_){} }
+
+  /**
+   * Save or update a user profile.  Passing a complete profile object
+   * (with a username) will insert or overwrite that record in the
+   * persistent users object.  The current user pointer will also be
+   * updated to reference the new profile.
+   * @param {Object} p The profile to save
+   */
+  function saveProfile(p){
+    if (!p || !p.username) return;
+    var users = loadUsers();
+    users[p.username] = p;
+    saveUsers(users);
+    setCurrentUser(p.username);
+  }
+
+  /**
+   * Load the profile for the currently logged in user.  If no user is
+   * logged in, returns null.
+   * @returns {Object|null} The active user profile
+   */
+  function loadProfile(){
+    var users = loadUsers();
+    var u = getCurrentUser();
+    return u && users[u] ? users[u] : null;
+  }
+
+  /**
+   * Persistent storage for comments.  Each comment includes the
+   * username of the posting account along with any uploaded image
+   * data, destination, optional display name and message text.  Saving
+   * comments to localStorage ensures they remain visible after page
+   * reloads.
+   */
+  function loadComments(){ try { return JSON.parse(localStorage.getItem('commentsV2') || '[]'); } catch(_) { return []; } }
+  function saveComments(c){ try { localStorage.setItem('commentsV2', JSON.stringify(c)); } catch(_){} }
+
+  var joinBtn = $('join-btn');
+  var overlay = $('join-overlay');
+  var joinForm = $('join-form');
+  var cancelBtn = $('join-cancel');
+  var profileCard = $('profile-card');
+  var profilePhoto = $('profile-photo');
+  var profileUsername = $('profile-username');
+  var profileFrom = $('profile-from');
+  var profileGreeting = $('profile-greeting');
+  var logoutBtn = $('logout-btn');
+
+  var commentForm = $('comment-form');
+  var commentPhoto = $('comment-photo');
+  var commentText = $('comment-text');
+  var commentsDisplay = $('comments-display');
+
+  // Elements for the login modal
+  var loginBtn = $('login-btn');
+  var loginOverlay = $('login-overlay');
+  var loginForm = $('login-form');
+  var loginCancel = $('login-cancel');
+
+  // Helper to open/close the login modal
+  function openLogin(){ if (loginOverlay){ loginOverlay.classList.remove('hidden'); loginOverlay.classList.add('flex'); } }
+  function closeLogin(){ if (loginOverlay){ loginOverlay.classList.add('hidden'); loginOverlay.classList.remove('flex'); } }
+
+  function openOverlay(){ if (overlay){ overlay.classList.remove('hidden'); overlay.classList.add('flex'); } }
+  function closeOverlay(){ if (overlay){ overlay.classList.add('hidden'); overlay.classList.remove('flex'); } }
+
+  function applyProfileUI(){
+    var p = loadProfile();
+    if (!profileCard) return;
+    if (p){
+      profileCard.classList.remove('hidden');
+      profileUsername && (profileUsername.textContent = p.username || '');
+      profileFrom && (profileFrom.textContent = p.from || '');
+      profileGreeting && (profileGreeting.textContent = p.greeting || '');
+      if (p.photoDataUrl){
+        profilePhoto && (profilePhoto.src = p.photoDataUrl);
+        profilePhoto && profilePhoto.classList.remove('hidden');
+      } else {
+        if (profilePhoto){ profilePhoto.src = ''; profilePhoto.classList.add('hidden'); }
+      }
+    } else {
+      profileCard.classList.add('hidden');
+    }
+  }
+
+  // Modal handlers
+  joinBtn && joinBtn.addEventListener('click', openOverlay);
+  cancelBtn && cancelBtn.addEventListener('click', closeOverlay);
+  // When a user submits the join form we create a new account.  If the
+  // username already exists, they are prompted to log in instead.  A
+  // password is mandatory for new accounts.
+  joinForm && joinForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    var username = (document.getElementById('join-username').value || '').trim();
+    var password = (document.getElementById('join-password').value || '').trim();
+    var from = (document.getElementById('join-from').value || '').trim();
+    var greeting = (document.getElementById('join-greeting').value || '').trim();
+    var file = document.getElementById('join-photo').files[0];
+    if (!username){ alert('Please enter a username.'); return; }
+    if (!password){ alert('Please enter a password.'); return; }
+    var users = loadUsers();
+    if (users[username]){
+      alert('That username is already taken. Please log in instead.');
+      closeOverlay();
+      openLogin();
+      return;
+    }
+    function finish(url){
+      var profileObj = { username: username, password: password, from: from, greeting: greeting, photoDataUrl: url || '' };
+      saveProfile(profileObj);
+      closeOverlay();
+      applyProfileUI();
+      renderComments();
+    }
+    if (file){
+      if (!file.type || file.type.indexOf('image/') !== 0){ alert('Please select an image file.'); return; }
+      var fr = new FileReader();
+      fr.onload = function(){ finish(fr.result); };
+      fr.onerror = function(){ alert('Could not read the selected image.'); };
+      fr.readAsDataURL(file);
+    } else {
+      finish('');
+    }
+  });
+
+  // Handle login submission.  Existing users provide their credentials
+  // and are authenticated against stored records.  A successful login
+  // updates the active profile and refreshes the comments display.
+  loginBtn && loginBtn.addEventListener('click', openLogin);
+  loginCancel && loginCancel.addEventListener('click', closeLogin);
+  loginForm && loginForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    var username = (document.getElementById('login-username').value || '').trim();
+    var password = (document.getElementById('login-password').value || '').trim();
+    var users = loadUsers();
+    if (!users[username] || users[username].password !== password){
+      alert('Invalid username or password.');
+      return;
+    }
+    setCurrentUser(username);
+    applyProfileUI();
+    renderComments();
+    closeLogin();
+  });
+
+  // Clicking the logout button clears the current user but retains their
+  // account information in storage.  Comments remain visible to other
+  // visitors and the page re-renders accordingly.
+  logoutBtn && logoutBtn.addEventListener('click', function(){
+    clearCurrentUser();
+    applyProfileUI();
+    renderComments();
+  });
+
+  // Gate post submit: must be joined + require 1 image & non-empty comment
+  if (commentForm){
+    commentForm.addEventListener('submit', function(e){
+      var p = loadProfile();
+      if (!p){
+        // Determine whether there are any existing accounts.  If there
+        // are, direct the user to log in; otherwise prompt them to
+        // create a profile.  Prevent further submit handlers from
+        // executing until they authenticate.
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        var users = loadUsers();
+        var hasUsers = Object.keys(users).length > 0;
+        if (hasUsers){
+          openLogin();
+        } else {
+          openOverlay();
+        }
+        return;
+      }
+      var file = commentPhoto && commentPhoto.files ? commentPhoto.files[0] : null;
+      var text = commentText ? (commentText.value || '').trim() : '';
+      if (!file){ e.preventDefault(); e.stopImmediatePropagation(); alert('Please add exactly one picture.'); return; }
+      if (!text){ e.preventDefault(); e.stopImmediatePropagation(); alert('Please add a comment.'); return; }
+      // Otherwise, let the page's original submit handler run and new handler will persist the post
+    }, true);
+  }
+
+  /**
+   * Render all stored comments to the page.  The most recent posts
+   * appear first.  Each card includes a profile header showing the
+   * username, origin and greeting of the author.  If the current
+   * visitor is the author of the post they also see a delete link.
+   */
+  function renderComments(){
+    if (!commentsDisplay) return;
+    var comments = loadComments();
+    // Clear existing elements before re-rendering
+    commentsDisplay.innerHTML = '';
+    var currentUser = getCurrentUser();
+    // Iterate from the end so that newer comments appear first
+    comments.slice().reverse().forEach(function(c, idx){
+      var card = document.createElement('div');
+      card.className = 'p-4 bg-white rounded-lg shadow-xl border border-gray-200 transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl';
+      // Header
+      var header = document.createElement('div');
+      header.className = 'flex items-center mb-2';
+      var headerHTML = '';
+      if (c.profilePhoto){
+        headerHTML += '<img src="'+ c.profilePhoto +'" class="w-10 h-10 rounded-full object-cover border border-gray-300 mr-2" alt="Profile">';
+      }
+      headerHTML += '<div class="text-sm"><div class="font-semibold">'+ (c.username || '') +'</div>';
+      if (c.from){ headerHTML += '<div class="text-gray-600">'+ c.from +'</div>'; }
+      if (c.greeting){ headerHTML += '<div class="text-gray-700">'+ c.greeting +'</div>'; }
+      headerHTML += '</div>';
+      header.innerHTML = headerHTML;
+      card.appendChild(header);
+      // Uploaded photo
+      if (c.photo){
+        var img = document.createElement('img');
+        img.src = c.photo;
+        img.alt = 'User uploaded photo';
+        img.className = 'w-full h-48 object-cover rounded mb-3';
+        card.appendChild(img);
+      }
+      // Country
+      var countryEl = document.createElement('p');
+      countryEl.className = 'text-sm text-gray-500 mb-1';
+      countryEl.textContent = c.country || '';
+      card.appendChild(countryEl);
+      // Display name
+      var nameEl = document.createElement('h4');
+      nameEl.className = 'font-semibold text-lg mb-1';
+      nameEl.textContent = c.name || 'Anonymous';
+      card.appendChild(nameEl);
+      // Comment text
+      var textEl = document.createElement('p');
+      textEl.className = 'text-gray-700';
+      textEl.textContent = c.text || '';
+      card.appendChild(textEl);
+      // Delete button for owner
+      if (currentUser && currentUser === c.username){
+        var delWrap = document.createElement('div');
+        delWrap.className = 'flex justify-end';
+        var delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'delete-comment-btn text-red-600 text-sm underline mt-3';
+        delBtn.textContent = 'Delete';
+        (function(index){
+          delBtn.addEventListener('click', function(){
+            if (!confirm('Delete this post?')) return;
+            var arr = loadComments();
+            // Indexing relative to reversed order: arr.length - 1 - index
+            arr.splice(arr.length - 1 - index, 1);
+            saveComments(arr);
+            renderComments();
+          });
+        })(idx);
+        delWrap.appendChild(delBtn);
+        card.appendChild(delWrap);
+      }
+      commentsDisplay.appendChild(card);
+    });
+  }
+
+  /**
+   * Intercept the default comment submission and persist the post.  The
+   * gating handler ensures the user is logged in and that an image and
+   * comment text are present.  Here we capture the image data
+   * (converted to a data URL) along with the comment and author
+   * details, append it to localStorage and re-render the comment
+   * list.
+   */
+  function handleNewComment(e){
+    e.preventDefault();
+    var p = loadProfile();
+    if (!p) return;
+    var nameInput = document.getElementById('comment-name');
+    var countryInput = document.getElementById('comment-country');
+    var name = nameInput ? (nameInput.value || '').trim() : '';
+    var country = countryInput ? countryInput.value : '';
+    var text = commentText ? (commentText.value || '').trim() : '';
+    var file = commentPhoto && commentPhoto.files ? commentPhoto.files[0] : null;
+    function finishComment(imgUrl){
+      var comments = loadComments();
+      comments.push({
+        username: p.username,
+        from: p.from,
+        greeting: p.greeting,
+        profilePhoto: p.photoDataUrl || '',
+        name: name || 'Anonymous',
+        country: country,
+        text: text,
+        photo: imgUrl || null
+      });
+      saveComments(comments);
+      renderComments();
+      // Reset form fields
+      commentForm.reset();
+      // Reset country dropdown to the currently selected destination
+      var cs = document.getElementById('country-select');
+      if (countryInput && cs){ countryInput.value = cs.value; }
+    }
+    if (file){
+      var fr = new FileReader();
+      fr.onload = function(){ finishComment(fr.result); };
+      fr.onerror = function(){ alert('Could not read the selected image.'); };
+      fr.readAsDataURL(file);
+    } else {
+      finishComment(null);
+    }
+  }
+
+  /*
+   * The old augmentCards helper and MutationObserver have been removed.  Each
+   * comment card is now fully rendered with its own profile header when
+   * comments are (re)drawn, so there is no need to inject header markup
+   * after the fact.
+   */
+
+  document.addEventListener('DOMContentLoaded', function(){
+    // One-time migration of legacy profileV2 to the new usersV2/currentUser
+    try {
+      var legacy = localStorage.getItem('profileV2');
+      if (legacy){
+        var oldProfile = JSON.parse(legacy);
+        if (oldProfile && oldProfile.username){
+          var users = loadUsers();
+          if (!users[oldProfile.username]){
+            // Migrate to a blank password for legacy profiles
+            users[oldProfile.username] = Object.assign({}, oldProfile, { password: '' });
+            saveUsers(users);
+          }
+          setCurrentUser(oldProfile.username);
+        }
+        localStorage.removeItem('profileV2');
+      }
+    } catch(_){ /* ignore malformed legacy data */ }
+
+    // Remove the old comment handler if it exists.  handleCommentSubmit is
+    // defined in the outer script so we can reference it here.
+    try {
+      if (commentForm && typeof handleCommentSubmit === 'function'){
+        commentForm.removeEventListener('submit', handleCommentSubmit);
+      }
+    } catch(_){}
+
+    // Attach our persistent comment handler
+    if (commentForm){ commentForm.addEventListener('submit', handleNewComment, false); }
+
+    applyProfileUI();
+    renderComments();
+  });
+})();
+</script>
 </body>
 </html>
