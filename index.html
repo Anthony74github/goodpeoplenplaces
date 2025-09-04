@@ -5064,10 +5064,17 @@ function renderEssentialPhrasesForCategory() {
       var v = localStorage.getItem(key);
       if (v !== null && v !== undefined) return v;
     } catch(_){ /* ignore */ }
-    // Fallback to cookies
-    var encodedKey = encodeURIComponent(key);
-    var match = document.cookie.match(new RegExp('(?:^|; )' + encodedKey.replace(/[\-\.]?/g, '\\$&') + '=([^;]*)'));
-    return match ? decodeURIComponent(match[1]) : null;
+    // Fallback to parsing document.cookie manually.  Cookies are separated by semicolons.
+    var encodedName = encodeURIComponent(key);
+    var cookies = document.cookie ? document.cookie.split('; ') : [];
+    for (var i = 0; i < cookies.length; i++){
+      var parts = cookies[i].split('=');
+      var cookieName = parts.shift();
+      if (cookieName === encodedName){
+        return decodeURIComponent(parts.join('='));
+      }
+    }
+    return null;
   }
   function removeStorageItem(key){
     try { localStorage.removeItem(key); } catch(_){ /* ignore */ }
