@@ -5031,11 +5031,71 @@ function renderEssentialPhrasesForCategory() {
    * plus a password.  The currently logged in user is stored under
    * `currentUser`.
    */
-  function loadUsers(){ try { return JSON.parse(localStorage.getItem('usersV2') || '{}'); } catch(_) { return {}; } }
-  function saveUsers(u){ try { localStorage.setItem('usersV2', JSON.stringify(u)); } catch(_){} }
-  function getCurrentUser(){ try { return localStorage.getItem('currentUser') || null; } catch(_) { return null; } }
-  function setCurrentUser(u){ try { if (u) { localStorage.setItem('currentUser', u); } } catch(_){} }
-  function clearCurrentUser(){ try { localStorage.removeItem('currentUser'); } catch(_){} }
+  /*
+   * Persistence helpers
+   *
+   * On some mobile browsers (e.g. Safari in private mode) localStorage
+   * operations may throw exceptions or be disabled entirely.  To ensure
+   * that user accounts and comments persist across page reloads on these
+   * devices, we fall back to cookies when localStorage is unavailable.
+   */
+  function setStorageItem(key, value){
+    try {
+      localStorage.setItem(key, value);
+      return true;
+    } catch(_){
+      try {
+        // Store in a cookie for one year if localStorage fails.  Cookies are
+        // scoped to the current path and domain.
+        var encodedKey = encodeURIComponent(key);
+        var encodedVal = encodeURIComponent(value);
+        document.cookie = encodedKey + '=' + encodedVal + '; path=/; max-age=' + (60*60*24*365);
+        return true;
+      } catch(__){ return false; }
+    }
+  }
+  function getStorageItem(key){
+    try {
+      var v = localStorage.getItem(key);
+      if (v !== null && v !== undefined) return v;
+    } catch(_){ /* ignore */ }
+    // Fallback to cookies
+    var encodedKey = encodeURIComponent(key);
+    var match = document.cookie.match(new RegExp('(?:^|; )' + encodedKey.replace(/[\-\.]?/g, '\\$&') + '=([^;]*)'));
+    return match ? decodeURIComponent(match[1]) : null;
+  }
+  function removeStorageItem(key){
+    try { localStorage.removeItem(key); } catch(_){ /* ignore */ }
+    // Remove cookie as well
+    var encodedKey = encodeURIComponent(key);
+    document.cookie = encodedKey + '=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+  }
+
+  function loadUsers(){
+    try {
+      return JSON.parse(getStorageItem('usersV2') || '{}');
+    } catch(_){ return {}; }
+  }
+  function saveUsers(u){
+    try {
+      setStorageItem('usersV2', JSON.stringify(u));
+    } catch(_){ /* ignore */ }
+  }
+  function getCurrentUser(){
+    try {
+      return getStorageItem('currentUser') || null;
+    } catch(_){ return null; }
+  }
+  function setCurrentUser(u){
+    try {
+      if (u){ setStorageItem('currentUser', u); }
+    } catch(_){ /* ignore */ }
+  }
+  function clearCurrentUser(){
+    try {
+      removeStorageItem('currentUser');
+    } catch(_){ /* ignore */ }
+  }
 
   /**
    * Save or update a user profile.  Passing a complete profile object
@@ -5070,8 +5130,16 @@ function renderEssentialPhrasesForCategory() {
    * comments to localStorage ensures they remain visible after page
    * reloads.
    */
-  function loadComments(){ try { return JSON.parse(localStorage.getItem('commentsV2') || '[]'); } catch(_) { return []; } }
-  function saveComments(c){ try { localStorage.setItem('commentsV2', JSON.stringify(c)); } catch(_){} }
+  function loadComments(){
+    try {
+      return JSON.parse(getStorageItem('commentsV2') || '[]');
+    } catch(_){ return []; }
+  }
+  function saveComments(c){
+    try {
+      setStorageItem('commentsV2', JSON.stringify(c));
+    } catch(_){ /* ignore */ }
+  }
 
   var joinBtn = $('join-btn');
   var overlay = $('join-overlay');
@@ -5389,7 +5457,7 @@ function renderEssentialPhrasesForCategory() {
   document.addEventListener('DOMContentLoaded', function(){
     // One-time migration of legacy profileV2 to the new usersV2/currentUser
     try {
-      var legacy = localStorage.getItem('profileV2');
+      var legacy = getStorageItem('profileV2');
       if (legacy){
         var oldProfile = JSON.parse(legacy);
         if (oldProfile && oldProfile.username){
@@ -5401,7 +5469,7 @@ function renderEssentialPhrasesForCategory() {
           }
           setCurrentUser(oldProfile.username);
         }
-        localStorage.removeItem('profileV2');
+        removeStorageItem('profileV2');
       }
     } catch(_){ /* ignore malformed legacy data */ }
 
