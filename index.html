@@ -472,14 +472,19 @@
                 <button id="login-btn" class="button-gradient text-white py-2 px-6 rounded-md shadow-md hover:scale-105 transition duration-300">Login</button>
             </div>
 <div id="profile-card" class="max-w-md mx-auto mt-4 bg-white rounded-lg shadow border border-gray-200 p-4 hidden">
-  <div class="flex items-center">
+    <div class="flex items-center">
     <img id="profile-photo" class="w-14 h-14 rounded-full object-cover border border-gray-300 mr-3 hidden" alt="Profile">
     <div>
       <div id="profile-username" class="font-semibold text-gray-900"></div>
       <div id="profile-from" class="text-gray-600 text-sm"></div>
       <div id="profile-greeting" class="text-gray-700 text-sm"></div>
     </div>
-    <button id="logout-btn" class="ml-auto text-sm text-blue-600 hover:underline">Log out</button>
+    <!-- Action buttons for the logged in user: log out, delete photo and delete profile -->
+    <div class="ml-auto flex flex-col items-end space-y-1">
+      <button id="logout-btn" class="text-sm text-blue-600 hover:underline">Log out</button>
+      <button id="delete-photo-btn" class="text-xs text-red-600 hover:underline">Delete Photo</button>
+      <button id="delete-profile-btn" class="text-xs text-red-600 hover:underline">Delete Profile</button>
+    </div>
   </div>
 </div>
             <p class="text-lg md:text-xl text-gray-700 mb-8 text-center">Upload a photo and tell us about your past or planned travels!</p>
@@ -5156,6 +5161,9 @@ function renderEssentialPhrasesForCategory() {
   var commentPhoto = $('comment-photo');
   var commentText = $('comment-text');
   var commentsDisplay = $('comments-display');
+  // New buttons for account maintenance
+  var deletePhotoBtn = $('delete-photo-btn');
+  var deleteProfileBtn = $('delete-profile-btn');
 
   // Elements for the login modal
   var loginBtn = $('login-btn');
@@ -5179,10 +5187,16 @@ function renderEssentialPhrasesForCategory() {
       profileFrom && (profileFrom.textContent = p.from || '');
       profileGreeting && (profileGreeting.textContent = p.greeting || '');
       if (p.photoDataUrl){
-        profilePhoto && (profilePhoto.src = p.photoDataUrl);
-        profilePhoto && profilePhoto.classList.remove('hidden');
+        if (profilePhoto){
+          profilePhoto.src = p.photoDataUrl;
+          profilePhoto.classList.remove('hidden');
+        }
+        // Show delete photo button when a picture is present
+        if (deletePhotoBtn) deletePhotoBtn.classList.remove('hidden');
       } else {
         if (profilePhoto){ profilePhoto.src = ''; profilePhoto.classList.add('hidden'); }
+        // Hide delete photo button when no picture is present
+        if (deletePhotoBtn) deletePhotoBtn.classList.add('hidden');
       }
     } else {
       profileCard.classList.add('hidden');
@@ -5253,6 +5267,53 @@ function renderEssentialPhrasesForCategory() {
   // account information in storage.  Comments remain visible to other
   // visitors and the page re-renders accordingly.
   logoutBtn && logoutBtn.addEventListener('click', function(){
+    clearCurrentUser();
+    applyProfileUI();
+    renderComments();
+  });
+
+  // Allow the user to remove their profile photo.  This clears the
+  // photoDataUrl field in their profile and updates any existing
+  // comments they have posted so that the header image disappears.
+  deletePhotoBtn && deletePhotoBtn.addEventListener('click', function(){
+    var p = loadProfile();
+    if (!p) return;
+    if (!confirm('Delete your profile photo?')) return;
+    p.photoDataUrl = '';
+    saveProfile(p);
+    // Update the profilePhoto for all comments authored by this user
+    var comments = loadComments();
+    var updated = false;
+    comments.forEach(function(c){
+      if (c.username === p.username){
+        c.profilePhoto = '';
+        updated = true;
+      }
+    });
+    if (updated) saveComments(comments);
+    applyProfileUI();
+    renderComments();
+  });
+
+  // Allow the user to delete their entire account.  This removes the
+  // user record, clears the current user pointer and deletes all
+  // comments authored by them.  It asks for confirmation before
+  // performing the destructive action.
+  deleteProfileBtn && deleteProfileBtn.addEventListener('click', function(){
+    var p = loadProfile();
+    if (!p) return;
+    if (!confirm('Delete your profile and all your posts? This cannot be undone.')) return;
+    // Remove the user from the users object
+    var users = loadUsers();
+    if (users[p.username]){
+      delete users[p.username];
+      saveUsers(users);
+    }
+    // Remove their comments
+    var comments = loadComments();
+    var filtered = comments.filter(function(c){ return c.username !== p.username; });
+    if (filtered.length !== comments.length){ saveComments(filtered); }
+    // Clear current user pointer
     clearCurrentUser();
     applyProfileUI();
     renderComments();
