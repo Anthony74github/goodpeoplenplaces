@@ -4900,6 +4900,32 @@ function renderEssentialPhrasesForCategory() {
                     deepResearchIframe.src = 'GPP%20Travel%20Guide.html';
                     deepResearchOverlay.classList.remove('hidden');
                 });
+                // Ensure the content inside the deep research iframe fills the available width on smaller devices.
+                // When the iframe loads, we inject a small style into the embedded document to override any
+                // fixed widths defined in the guide.  This is only applied on narrow screens (mobile portrait).
+                deepResearchIframe.addEventListener('load', () => {
+                    if (window.innerWidth < 640) {
+                        try {
+                            const doc = deepResearchIframe.contentDocument || deepResearchIframe.contentWindow.document;
+                            if (doc) {
+                                // Add a viewport meta tag if one doesn't exist to improve mobile scaling
+                                if (!doc.querySelector('meta[name="viewport"]')) {
+                                    const meta = doc.createElement('meta');
+                                    meta.name = 'viewport';
+                                    meta.content = 'width=device-width, initial-scale=1';
+                                    doc.head.appendChild(meta);
+                                }
+                                const style = doc.createElement('style');
+                                style.textContent =
+                                    'body, html { margin: 0; padding: 0; width: 100% !important; max-width: 100% !important; }\n' +
+                                    'img { max-width: 100% !important; height: auto !important; }';
+                                doc.head.appendChild(style);
+                            }
+                        } catch (e) {
+                            // If we cannot access the iframe content due to security restrictions, do nothing
+                        }
+                    }
+                });
                 closeDeepResearchBtn.addEventListener('click', () => {
                     deepResearchOverlay.classList.add('hidden');
                     // Clear the iframe src so that the guide is reloaded on next open
