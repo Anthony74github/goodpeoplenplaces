@@ -5103,6 +5103,44 @@ function renderEssentialPhrasesForCategory() {
   }
 
   /**
+   * Read a file (typically an image) and produce a Data URL.  On some mobile
+   * browsers FileReader.readAsDataURL may fail silently or emit an error.
+   * This helper attempts to read the file using FileReader and, if that
+   * fails, falls back to fetching a blob via a temporary object URL and
+   * converting that blob to a Data URL.  The onSuccess callback will be
+   * invoked with the resulting data URL.  onError is called if all
+   * attempts fail.
+   * @param {File} file The file to read
+   * @param {Function} onSuccess Callback invoked with the data URL
+   * @param {Function} onError Callback invoked on failure
+   */
+  function readFileAsDataURL(file, onSuccess, onError){
+    if (!file){ if (onError) onError(new Error('No file provided')); return; }
+    function fallback(){
+      try {
+        var objectUrl = URL.createObjectURL(file);
+        fetch(objectUrl)
+          .then(function(resp){ return resp.blob(); })
+          .then(function(blob){
+            var fr2 = new FileReader();
+            fr2.onload = function(){ if (onSuccess) onSuccess(fr2.result); };
+            fr2.onerror = function(){ if (onError) onError(new Error('Failed to read file')); };
+            fr2.readAsDataURL(blob);
+          })
+          .catch(function(){ if (onError) onError(new Error('Failed to read file')); });
+      } catch(err){ if (onError) onError(err); }
+    }
+    try {
+      var fr = new FileReader();
+      fr.onload = function(){ if (onSuccess) onSuccess(fr.result); };
+      fr.onerror = function(){ fallback(); };
+      fr.readAsDataURL(file);
+    } catch(e){
+      fallback();
+    }
+  }
+
+  /**
    * Save or update a user profile.  Passing a complete profile object
    * (with a username) will insert or overwrite that record in the
    * persistent users object.  The current user pointer will also be
@@ -5234,10 +5272,8 @@ function renderEssentialPhrasesForCategory() {
     }
     if (file){
       if (!file.type || file.type.indexOf('image/') !== 0){ alert('Please select an image file.'); return; }
-      var fr = new FileReader();
-      fr.onload = function(){ finish(fr.result); };
-      fr.onerror = function(){ alert('Could not read the selected image.'); };
-      fr.readAsDataURL(file);
+      // Use the robust file reader helper.  Fallbacks are handled inside readFileAsDataURL.
+      readFileAsDataURL(file, function(data){ finish(data); }, function(){ alert('Could not read the selected image.'); });
     } else {
       finish('');
     }
@@ -5499,10 +5535,9 @@ function renderEssentialPhrasesForCategory() {
       if (countryInput && cs){ countryInput.value = cs.value; }
     }
     if (file){
-      var fr = new FileReader();
-      fr.onload = function(){ finishComment(fr.result); };
-      fr.onerror = function(){ alert('Could not read the selected image.'); };
-      fr.readAsDataURL(file);
+      // Use the robust file reader helper to obtain a Data URL.  If both FileReader and the
+      // fallback mechanism fail, alert the user.
+      readFileAsDataURL(file, function(data){ finishComment(data); }, function(){ alert('Could not read the selected image.'); });
     } else {
       finishComment(null);
     }
