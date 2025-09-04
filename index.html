@@ -4550,8 +4550,12 @@
             const toEl = document.getElementById('to-unit');
             const resultEl = document.getElementById('measurement-result');
             const value = parseFloat(inputEl ? inputEl.value : '');
+            // Read the raw unit codes (e.g. "km", "miles", "celsius") from the select values
             const fromUnit = fromEl ? fromEl.value : '';
             const toUnit = toEl ? toEl.value : '';
+            // Also obtain the displayed text for each option to preserve proper casing (e.g. "Kilometers", "Miles").
+            const fromText = fromEl && fromEl.selectedIndex >= 0 ? fromEl.options[fromEl.selectedIndex].text : fromUnit;
+            const toText = toEl && toEl.selectedIndex >= 0 ? toEl.options[toEl.selectedIndex].text : toUnit;
             if (isNaN(value)) {
                 if (resultEl) resultEl.textContent = 'Please enter a valid number.';
                 return;
@@ -4568,7 +4572,8 @@
             else if (fromUnit === 'lbs' && toUnit === 'kg') result = value / 2.20462;
             else result = value;
             if (resultEl) {
-                resultEl.textContent = `${value} ${fromUnit} = ${result.toFixed(2)} ${toUnit}`;
+                // Display the result using the option text to ensure the units start with capital letters.
+                resultEl.textContent = `${value} ${fromText} = ${result.toFixed(2)} ${toText}`;
             }
             // Removed alert popup: the result is displayed directly on the page like other conversion tools
         }
