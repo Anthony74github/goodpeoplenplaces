@@ -5175,11 +5175,36 @@ function renderEssentialPhrasesForCategory() {
       card.appendChild(header);
       // Uploaded photo
       if (c.photo){
+        // Wrap the image in a container that enforces one of the allowed aspect ratios.
+        // The actual image is set to object-contain so the entire picture is visible
+        // without cropping or stretching.  The aspect ratio of the wrapper is chosen
+        // based on the natural dimensions of the uploaded image.
+        var wrap = document.createElement('div');
+        wrap.className = 'relative w-full rounded mb-3 overflow-hidden';
         var img = document.createElement('img');
         img.src = c.photo;
         img.alt = 'User uploaded photo';
-        img.className = 'w-full h-48 object-cover rounded mb-3';
-        card.appendChild(img);
+        img.className = 'absolute inset-0 w-full h-full object-contain';
+        img.onload = function(){
+          try {
+            var w = img.naturalWidth || 1;
+            var h = img.naturalHeight || 1;
+            var ratio = w / h;
+            var choices = [ {r: 3/2, str:'3 / 2'}, {r: 4/3, str:'4 / 3'}, {r: 1, str:'1 / 1'}, {r: 16/9, str:'16 / 9'} ];
+            var best = choices[0];
+            var minDiff = Math.abs(ratio - choices[0].r);
+            for (var i=1; i<choices.length; i++){
+              var diff = Math.abs(ratio - choices[i].r);
+              if (diff < minDiff){
+                minDiff = diff;
+                best = choices[i];
+              }
+            }
+            wrap.style.aspectRatio = best.str;
+          } catch(_){}
+        };
+        wrap.appendChild(img);
+        card.appendChild(wrap);
       }
       // Country
       var countryEl = document.createElement('p');
