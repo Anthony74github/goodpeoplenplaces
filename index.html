@@ -284,11 +284,17 @@
                     <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl border border-gray-200 transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl">
                         <h3 class="text-2xl font-semibold mb-4 text-blue-600">Currency Converter</h3>
                         <p id="currency-note" class="text-sm text-gray-500 mb-4">Loading exchange rates…</p>
-                        <div class="flex flex-col md:flex-row md:flex-nowrap md:items-center md:space-x-2 space-y-4 md:space-y-2">
-                            <input type="number" id="currency-amount" class="p-3 border border-gray-300 rounded-md flex-grow" placeholder="Enter amount" min="0" step="0.01">
-                            <select id="from-currency" class="p-3 border border-gray-300 rounded-md"></select>
-                            <span class="text-gray-600 font-semibold">to</span>
-                            <select id="to-currency" class="p-3 border border-gray-300 rounded-md"></select>
+                        <!-- Wrap fields responsively on all screen sizes.  On small screens the inputs stack vertically; from the small breakpoint onwards they form a row that can wrap if the available width is limited (e.g., mobile phones in landscape). -->
+                        <div class="grid gap-y-4 sm:gap-y-2 sm:gap-x-2 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
+                            <!-- The amount input spans the full width on small screens and occupies one column on larger screens. -->
+                            <input type="number" id="currency-amount" class="p-3 border border-gray-300 rounded-md w-full" placeholder="Enter amount" min="0" step="0.01">
+                            <!-- Source currency selector. -->
+                            <select id="from-currency" class="p-3 border border-gray-300 rounded-md w-full"></select>
+                            <!-- Group the "to" label with the target currency select so they remain together when the grid wraps. -->
+                            <div class="flex items-center space-x-2 w-full">
+                                <span class="text-gray-600 font-semibold">to</span>
+                                <select id="to-currency" class="p-3 border border-gray-300 rounded-md flex-1"></select>
+                            </div>
                         </div>
                         <!-- Move the convert button below the input row for a cleaner layout -->
                         <button id="convert-currency-btn" class="button-gradient text-white py-2 px-6 rounded-md shadow-md hover:scale-105 transition duration-300 mt-4">Convert</button>
@@ -297,10 +303,11 @@
                     <!-- Measurement Converter -->
                     <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl border border-gray-200 transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl">
                         <h3 class="text-2xl font-semibold mb-4 text-blue-600">Measurement Converter</h3>
-                        <div class="flex flex-col md:flex-row md:flex-nowrap md:items-center md:space-x-2 space-y-4 md:space-y-2">
-                            <!-- Ensure the measurement input is full width on small screens and shrinks appropriately on medium screens. -->
-                            <input type="number" id="measurement-input" class="p-3 border border-gray-300 rounded-md flex-grow w-full md:w-auto" placeholder="Enter value" step="any">
-                            <select id="from-unit" class="p-3 border border-gray-300 rounded-md">
+                        <!-- On small screens, stack fields vertically.  From the small breakpoint onwards, align them in a row that can wrap if the available width is limited (e.g., mobile phones in landscape). -->
+                        <div class="grid gap-y-4 sm:gap-y-2 sm:gap-x-2 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
+                            <!-- The measurement input spans the full width on small screens and occupies one column on larger screens. -->
+                            <input type="number" id="measurement-input" class="p-3 border border-gray-300 rounded-md w-full" placeholder="Enter value" step="any">
+                            <select id="from-unit" class="p-3 border border-gray-300 rounded-md w-full">
                                 <option value="km">Kilometers</option>
                                 <option value="miles">Miles</option>
                                 <option value="celsius">Celsius</option>
@@ -308,15 +315,18 @@
                                 <option value="kg">Kilograms</option>
                                 <option value="lbs">Pounds</option>
                             </select>
-                            <span class="text-gray-600 font-semibold">to</span>
-                            <select id="to-unit" class="p-3 border border-gray-300 rounded-md">
-                                <option value="miles">Miles</option>
-                                <option value="km">Kilometers</option>
-                                <option value="fahrenheit">Fahrenheit</option>
-                                <option value="celsius">Celsius</option>
-                                <option value="lbs">Pounds</option>
-                                <option value="kg">Kilograms</option>
-                            </select>
+                            <!-- Group the "to" label with the target unit selector so they remain together when the grid wraps. -->
+                            <div class="flex items-center space-x-2 w-full">
+                                <span class="text-gray-600 font-semibold">to</span>
+                                <select id="to-unit" class="p-3 border border-gray-300 rounded-md flex-1">
+                                    <option value="miles">Miles</option>
+                                    <option value="km">Kilometers</option>
+                                    <option value="fahrenheit">Fahrenheit</option>
+                                    <option value="celsius">Celsius</option>
+                                    <option value="lbs">Pounds</option>
+                                    <option value="kg">Kilograms</option>
+                                </select>
+                            </div>
                         </div>
                         <!-- Convert button placed on its own line for consistency -->
                         <button id="convert-measurement-btn" class="button-gradient text-white py-2 px-6 rounded-md shadow-md hover:scale-105 transition duration-300 mt-4">Convert</button>
@@ -4613,13 +4623,43 @@ function renderEssentialPhrasesForCategory() {
          */
         async function fetchIpAddress() {
             ipAddressDisplay.textContent = 'Fetching IP…';
-            try {
-                const res = await fetch('https://api.ipify.org?format=json');
-                const data = await res.json();
-                ipAddressDisplay.textContent = `Your public IP address: ${data.ip}`;
-            } catch (err) {
-                ipAddressDisplay.textContent = 'Unable to fetch IP.';
+            // Define a list of endpoints with parsers for the response.  These endpoints are queried
+            // sequentially until one succeeds.  This approach increases the chance of obtaining a
+            // usable IP address even if some services are unreachable due to network restrictions.
+            const endpoints = [
+                {
+                    url: 'https://api.ipify.org?format=json',
+                    parser: async (res) => (await res.json()).ip,
+                },
+                {
+                    url: 'https://ipapi.co/json/',
+                    parser: async (res) => (await res.json()).ip,
+                },
+                {
+                    // AWS service that returns the IP address as plain text.
+                    url: 'https://checkip.amazonaws.com/',
+                    parser: async (res) => (await res.text()).trim(),
+                },
+                {
+                    // Another plain‑text IP service as a last resort.
+                    url: 'https://ifconfig.me/ip',
+                    parser: async (res) => (await res.text()).trim(),
+                },
+            ];
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(endpoint.url);
+                    if (!response.ok) throw new Error('Service failure');
+                    const ip = await endpoint.parser(response);
+                    if (ip) {
+                        ipAddressDisplay.textContent = `Your public IP address: ${ip}`;
+                        return;
+                    }
+                } catch (error) {
+                    // Ignore the error and continue to the next endpoint
+                }
             }
+            ipAddressDisplay.textContent = 'Unable to fetch IP.';
         }
 
         /**
