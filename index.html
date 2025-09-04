@@ -5044,44 +5044,116 @@ function renderEssentialPhrasesForCategory() {
    * that user accounts and comments persist across page reloads on these
    * devices, we fall back to cookies when localStorage is unavailable.
    */
-  function setStorageItem(key, value){
-    try {
-      localStorage.setItem(key, value);
-      return true;
-    } catch(_){
-      try {
-        // Store in a cookie for one year if localStorage fails.  Cookies are
-        // scoped to the current path and domain.
-        var encodedKey = encodeURIComponent(key);
-        var encodedVal = encodeURIComponent(value);
-        document.cookie = encodedKey + '=' + encodedVal + '; path=/; max-age=' + (60*60*24*365);
-        return true;
-      } catch(__){ return false; }
-    }
-  }
-  function getStorageItem(key){
-    try {
-      var v = localStorage.getItem(key);
-      if (v !== null && v !== undefined) return v;
-    } catch(_){ /* ignore */ }
-    // Fallback to parsing document.cookie manually.  Cookies are separated by semicolons.
-    var encodedName = encodeURIComponent(key);
-    var cookies = document.cookie ? document.cookie.split('; ') : [];
-    for (var i = 0; i < cookies.length; i++){
-      var parts = cookies[i].split('=');
-      var cookieName = parts.shift();
-      if (cookieName === encodedName){
-        return decodeURIComponent(parts.join('='));
-      }
-    }
-    return null;
-  }
-  function removeStorageItem(key){
-    try { localStorage.removeItem(key); } catch(_){ /* ignore */ }
-    // Remove cookie as well
-    var encodedKey = encodeURIComponent(key);
-    document.cookie = encodedKey + '=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-  }
+        /*
+         * Set, get and remove persistent items in a platform‑agnostic manner.
+         * We first attempt to use localStorage for unlimited capacity.  If
+         * localStorage throws (as it may on some mobile browsers in
+         * private/incognito mode), we fall back to cookies.  To support
+         * storing large values (e.g. images encoded as data URIs) when
+         * cookies are used, values are automatically split across
+         * multiple cookies if necessary.  Each cookie can hold roughly
+         * 4 KiB of data, so we break long strings into segments of
+         * around 3800 characters to allow for cookie overhead.  A
+         * metadata cookie with the suffix `_parts` stores the segment
+         * count.
+         */
+        function setStorageItem(key, value){
+          try {
+            localStorage.setItem(key, value);
+            return true;
+          } catch(_){ /* ignore and fall back to cookies */ }
+          try {
+            var encodedKey = encodeURIComponent(key);
+            var encodedVal = encodeURIComponent(value);
+            // Remove any existing segmented cookies for this key before writing new ones
+            removeStorageItem(key);
+            // If value fits within a single cookie (~3800 chars when encoded) then write
+            // it directly.  Otherwise break it into segments and store a parts count.
+            var segmentLength = 3800;
+            if (encodedVal.length <= segmentLength){
+              document.cookie = encodedKey + '=' + encodedVal + '; path=/; max-age=' + (60*60*24*365);
+            } else {
+              var parts = Math.ceil(encodedVal.length / segmentLength);
+              document.cookie = encodedKey + '_parts=' + parts + '; path=/; max-age=' + (60*60*24*365);
+              for (var i = 0; i < parts; i++){
+                var partVal = encodedVal.slice(i * segmentLength, (i + 1) * segmentLength);
+                document.cookie = encodedKey + '_' + i + '=' + partVal + '; path=/; max-age=' + (60*60*24*365);
+              }
+            }
+            return true;
+          } catch(__){ return false; }
+        }
+        function getStorageItem(key){
+          // Try localStorage first
+          try {
+            var v = localStorage.getItem(key);
+            if (v !== null && v !== undefined) return v;
+          } catch(_){ /* ignore and fall back to cookies */ }
+          // Check if the value was stored in one or more cookies.  If a
+          // `_parts` cookie exists we need to reassemble the segments.
+          var encodedKey = encodeURIComponent(key);
+          var cookies = document.cookie ? document.cookie.split('; ') : [];
+          var partsCount = 0;
+          var singleValue = null;
+          // First pass: look for the parts count or the single cookie
+          for (var i = 0; i < cookies.length; i++){
+            var parts = cookies[i].split('=');
+            var name = parts.shift();
+            var val = parts.join('=');
+            if (name === encodedKey + '_parts'){
+              partsCount = parseInt(val, 10) || 0;
+              break;
+            }
+            if (name === encodedKey){
+              singleValue = decodeURIComponent(val);
+            }
+          }
+          if (partsCount > 0){
+            var assembled = '';
+            // Collect each segment in order; if a segment is missing, bail
+            for (var j = 0; j < partsCount; j++){
+              var segName = encodedKey + '_' + j;
+              var segVal = null;
+              for (var k = 0; k < cookies.length; k++){
+                var parts2 = cookies[k].split('=');
+                var name2 = parts2.shift();
+                if (name2 === segName){ segVal = parts2.join('='); break; }
+              }
+              if (segVal === null){ return null; }
+              assembled += segVal;
+            }
+            return decodeURIComponent(assembled);
+          }
+          if (singleValue !== null){ return singleValue; }
+          return null;
+        }
+        function removeStorageItem(key){
+          // Remove from localStorage
+          try { localStorage.removeItem(key); } catch(_){ /* ignore */ }
+          // Remove any cookies associated with this key (single or segmented)
+          var encodedKey = encodeURIComponent(key);
+          // Determine if there are segmented parts
+          var cookies = document.cookie ? document.cookie.split('; ') : [];
+          var partsCount = 0;
+          for (var i = 0; i < cookies.length; i++){
+            var parts = cookies[i].split('=');
+            var name = parts.shift();
+            var val = parts.join('=');
+            if (name === encodedKey + '_parts'){
+              partsCount = parseInt(val, 10) || 0;
+              break;
+            }
+          }
+          // Expire the header and segments
+          if (partsCount > 0){
+            document.cookie = encodedKey + '_parts=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+            for (var j = 0; j < partsCount; j++){
+              document.cookie = encodedKey + '_' + j + '=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+            }
+          }
+          // Expire the single cookie
+          document.cookie = encodedKey + '=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        }
 
   function loadUsers(){
     try {
