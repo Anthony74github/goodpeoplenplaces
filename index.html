@@ -103,7 +103,8 @@
         <!-- Overlay content with semi‑transparent background to improve legibility.  Limit the width on large screens so that the background banner remains visible around the edges. -->
         <div class="relative z-10 bg-black bg-opacity-40 p-8 rounded-lg text-center max-w-4xl mx-4 w-full">
             <!-- Use whitespace‑nowrap to force the title onto a single line.  If the viewport becomes too narrow, horizontal scrolling will occur rather than wrapping. -->
-            <h1 class="whitespace-nowrap text-4xl md:text-6xl font-extrabold mb-4 drop-shadow-lg">Good People n Places</h1>
+            <!-- Allow the hero title to wrap on small screens to avoid horizontal overflow.  Maintain no wrapping on medium and larger screens. -->
+            <h1 class="md:whitespace-nowrap text-4xl md:text-6xl font-extrabold mb-4 drop-shadow-lg">Good People n Places</h1>
             <p class="text-lg md:text-2xl mb-8 drop-shadow">Discover cultures, learn tips and share your adventures.</p>
             <!-- Replace inline scroll behaviour with a dedicated button that triggers a random recommendation modal -->
             <button id="start-explore-btn" class="button-gradient text-white font-semibold py-3 px-8 rounded-full shadow-lg hover:scale-105 transition duration-300">Start Exploring</button>
@@ -113,26 +114,27 @@
     <!-- Main navigation bar: provides quick links to key sections.  It is sticky so it remains visible at the top when scrolling.  Each tab is styled like a slanted folder with the same gradient as the Start Exploring button and reacts on hover. -->
     <nav id="main-nav" class="bg-white sticky top-0 z-40">
         <!-- Spread tabs evenly across the full width.  Each wrapper uses flex-1 to occupy equal space. -->
-        <div class="w-full flex justify-between px-4 md:px-6 py-3 text-sm md:text-base">
+        <!-- On small screens the navigation tabs wrap and are centered.  On medium screens and up they align in a single row and spread evenly across the full width. -->
+        <div class="w-full flex flex-wrap md:flex-nowrap justify-center md:justify-between px-4 md:px-6 py-3 text-sm md:text-base">
             <!-- Home tab -->
-            <div class="relative -skew-x-12 flex-1 transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl">
-                <a href="#hero" class="button-gradient skew-x-12 block w-full px-4 py-2 text-white font-medium text-center shadow-md border border-gray-200 rounded-md">Home</a>
+            <div class="relative -skew-x-12 md:flex-1 transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl">
+                <a href="#hero" class="button-gradient skew-x-12 block w-full px-3 md:px-4 py-2 text-white font-medium text-center shadow-md border border-gray-200 rounded-md">Home</a>
             </div>
             <!-- Destinations tab -->
-            <div class="relative -skew-x-12 flex-1 transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl">
-                <a href="#destination-section" class="button-gradient skew-x-12 block w-full px-4 py-2 text-white font-medium text-center shadow-md border border-gray-200 rounded-md">Destinations</a>
+            <div class="relative -skew-x-12 md:flex-1 transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl">
+                <a href="#destination-section" class="button-gradient skew-x-12 block w-full px-3 md:px-4 py-2 text-white font-medium text-center shadow-md border border-gray-200 rounded-md">Destinations</a>
             </div>
             <!-- Travel Tools tab -->
-            <div class="relative -skew-x-12 flex-1 transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl">
-                <a href="#tools-section" class="button-gradient skew-x-12 block w-full px-4 py-2 text-white font-medium text-center shadow-md border border-gray-200 rounded-md">Travel Tools</a>
+            <div class="relative -skew-x-12 md:flex-1 transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl">
+                <a href="#tools-section" class="button-gradient skew-x-12 block w-full px-3 md:px-4 py-2 text-white font-medium text-center shadow-md border border-gray-200 rounded-md">Travel Tools</a>
             </div>
             <!-- Learn More tab -->
-            <div class="relative -skew-x-12 flex-1 transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl">
-                <a href="#learn-more-section" class="button-gradient skew-x-12 block w-full px-4 py-2 text-white font-medium text-center shadow-md border border-gray-200 rounded-md">Learn More</a>
+            <div class="relative -skew-x-12 md:flex-1 transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl">
+                <a href="#learn-more-section" class="button-gradient skew-x-12 block w-full px-3 md:px-4 py-2 text-white font-medium text-center shadow-md border border-gray-200 rounded-md">Learn More</a>
             </div>
             <!-- Join tab -->
-            <div class="relative -skew-x-12 flex-1 transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl">
-                <a href="#comments-section" class="button-gradient skew-x-12 block w-full px-4 py-2 text-white font-medium text-center shadow-md border border-gray-200 rounded-md">Join</a>
+            <div class="relative -skew-x-12 md:flex-1 transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl">
+                <a href="#comments-section" class="button-gradient skew-x-12 block w-full px-3 md:px-4 py-2 text-white font-medium text-center shadow-md border border-gray-200 rounded-md">Join</a>
             </div>
         </div>
 
@@ -296,7 +298,8 @@
                     <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl border border-gray-200 transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl">
                         <h3 class="text-2xl font-semibold mb-4 text-blue-600">Measurement Converter</h3>
                         <div class="flex flex-col md:flex-row md:flex-nowrap md:items-center md:space-x-2 space-y-4 md:space-y-2">
-                            <input type="number" id="measurement-input" class="p-3 border border-gray-300 rounded-md flex-grow" style="width: 90%;" placeholder="Enter value" step="any">
+                            <!-- Ensure the measurement input is full width on small screens and shrinks appropriately on medium screens. -->
+                            <input type="number" id="measurement-input" class="p-3 border border-gray-300 rounded-md flex-grow w-full md:w-auto" placeholder="Enter value" step="any">
                             <select id="from-unit" class="p-3 border border-gray-300 rounded-md">
                                 <option value="km">Kilometers</option>
                                 <option value="miles">Miles</option>
