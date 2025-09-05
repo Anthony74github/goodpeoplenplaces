@@ -5146,74 +5146,30 @@ function shareToTikTok(){
          * count.
          */
         function setStorageItem(key, value){
+          // Attempt to store data in localStorage only.  If localStorage is
+          // unavailable (e.g. in private mode on certain mobile browsers),
+          // silently fail rather than falling back to cookies.  This avoids
+          // creating large cookie values that could cause HTTP 400 errors
+          // when sent to the server.
           try {
             localStorage.setItem(key, value);
             return true;
-          } catch(_){ /* ignore and fall back to cookies */ }
-          try {
-            var encodedKey = encodeURIComponent(key);
-            var encodedVal = encodeURIComponent(value);
-            // Remove any existing segmented cookies for this key before writing new ones
-            removeStorageItem(key);
-            // If value fits within a single cookie (~3800 chars when encoded) then write
-            // it directly.  Otherwise break it into segments and store a parts count.
-            var segmentLength = 3800;
-            if (encodedVal.length <= segmentLength){
-              document.cookie = encodedKey + '=' + encodedVal + '; path=/; max-age=' + (60*60*24*365);
-            } else {
-              var parts = Math.ceil(encodedVal.length / segmentLength);
-              document.cookie = encodedKey + '_parts=' + parts + '; path=/; max-age=' + (60*60*24*365);
-              for (var i = 0; i < parts; i++){
-                var partVal = encodedVal.slice(i * segmentLength, (i + 1) * segmentLength);
-                document.cookie = encodedKey + '_' + i + '=' + partVal + '; path=/; max-age=' + (60*60*24*365);
-              }
-            }
-            return true;
-          } catch(__){ return false; }
+          } catch(_){
+            // Do not store in cookies
+            return false;
+          }
         }
+
         function getStorageItem(key){
-          // Try localStorage first
+          // Only read from localStorage.  Do not attempt to reconstruct
+          // values from cookies to avoid accidentally consuming large
+          // cookie payloads.  If localStorage is unavailable, return null.
           try {
             var v = localStorage.getItem(key);
-            if (v !== null && v !== undefined) return v;
-          } catch(_){ /* ignore and fall back to cookies */ }
-          // Check if the value was stored in one or more cookies.  If a
-          // `_parts` cookie exists we need to reassemble the segments.
-          var encodedKey = encodeURIComponent(key);
-          var cookies = document.cookie ? document.cookie.split('; ') : [];
-          var partsCount = 0;
-          var singleValue = null;
-          // First pass: look for the parts count or the single cookie
-          for (var i = 0; i < cookies.length; i++){
-            var parts = cookies[i].split('=');
-            var name = parts.shift();
-            var val = parts.join('=');
-            if (name === encodedKey + '_parts'){
-              partsCount = parseInt(val, 10) || 0;
-              break;
-            }
-            if (name === encodedKey){
-              singleValue = decodeURIComponent(val);
-            }
+            return v !== null && v !== undefined ? v : null;
+          } catch(_){
+            return null;
           }
-          if (partsCount > 0){
-            var assembled = '';
-            // Collect each segment in order; if a segment is missing, bail
-            for (var j = 0; j < partsCount; j++){
-              var segName = encodedKey + '_' + j;
-              var segVal = null;
-              for (var k = 0; k < cookies.length; k++){
-                var parts2 = cookies[k].split('=');
-                var name2 = parts2.shift();
-                if (name2 === segName){ segVal = parts2.join('='); break; }
-              }
-              if (segVal === null){ return null; }
-              assembled += segVal;
-            }
-            return decodeURIComponent(assembled);
-          }
-          if (singleValue !== null){ return singleValue; }
-          return null;
         }
         function removeStorageItem(key){
           // Remove from localStorage
@@ -5242,6 +5198,27 @@ function shareToTikTok(){
           // Expire the single cookie
           document.cookie = encodedKey + '=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
         }
+
+      /*
+       * Immediately clear any persisted user or comment data from previous versions.
+       * Old versions of this site stored user profiles, login state and comments
+       * in cookies when localStorage was unavailable (e.g. on certain mobile
+       * browsers).  Large image data stored this way can cause the browser to
+       * send very long Cookie headers, which some servers reject with HTTP
+       * 400 (Bad Request) responses.  Since the Share Your Trip section now
+       * relies solely on external social media, we no longer need to retain
+       * these values.  Removing them reduces the Cookie header size and
+       * prevents errors when loading the page on devices where the cookies
+       * otherwise persist.  We ignore any errors encountered when removing.
+       */
+      try {
+        removeStorageItem('usersV2');
+        removeStorageItem('currentUser');
+        removeStorageItem('commentsV2');
+        removeStorageItem('profileV2');
+      } catch (cleanupErr) {
+        /* Ignore errors during cleanup */
+      }
 
   function loadUsers(){
     try {
