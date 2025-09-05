@@ -145,10 +145,10 @@
             <div class="relative -skew-x-12 md:flex-1 transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl">
                 <a href="#learn-more-section" class="button-gradient skew-x-12 block w-full px-3 md:px-4 py-2 text-white font-medium text-center shadow-md border border-gray-200 rounded-md">Learn More</a>
             </div>
-            <!-- Join tab -->
-            <div class="relative -skew-x-12 md:flex-1 transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl">
-                <a href="#comments-section" class="button-gradient skew-x-12 block w-full px-3 md:px-4 py-2 text-white font-medium text-center shadow-md border border-gray-200 rounded-md">Join</a>
-            </div>
+                  <!-- Share tab (previously Join) -->
+                  <div class="relative -skew-x-12 md:flex-1 transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl">
+                      <a href="#comments-section" class="button-gradient skew-x-12 block w-full px-3 md:px-4 py-2 text-white font-medium text-center shadow-md border border-gray-200 rounded-md">Share</a>
+                  </div>
         </div>
 
     <!-- Deep Research Overlay -->
@@ -500,7 +500,7 @@
     </div>
   </div>
 </div>
-            <p class="text-lg md:text-xl text-gray-700 mb-8 text-center">Upload a photo and tell us about your past or planned travels!</p>
+            <p class="text-lg md:text-xl text-gray-700 mb-8 text-center">Upload a photo and tell us about your past or future travel plans!</p>
             <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl border border-gray-200 transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl mb-10">
                 <form id="comment-form" class="space-y-4">
                     <div class="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0">
@@ -4250,16 +4250,24 @@
          * Update the time displays for the local and destination time zones.
          */
         function updateTimeDisplays() {
+            // If no country is selected or the selected country is not in the data set,
+            // show only the local time and clear the destination display.
+            const now = new Date();
+            localTimeDisplay.textContent = `Your Local Time: ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}`;
+            if (!countrySelect || !countrySelect.value || !countriesData[countrySelect.value]) {
+                destinationTimeDisplay.textContent = '';
+                return;
+            }
             const destinationCountry = countriesData[countrySelect.value];
             const destinationZone = destinationCountry.timeZoneId;
-            const now = new Date();
-            // Local time
-            // Always show the user’s local time based on the browser locale
-            localTimeDisplay.textContent = `Your Local Time: ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}`;
             // Destination time
             const destOptions = { timeZone: destinationZone, hour: '2-digit', minute: '2-digit', hour12: true };
             destinationTimeDisplay.textContent = `${countrySelect.value}: ${new Date().toLocaleTimeString([], destOptions)}`;
         }
+
+        // Automatically refresh the time displays.  Call once immediately and then every second so the clocks tick in real‑time.  A one‑second interval has negligible performance impact and ensures users always see the current local and destination time.
+        updateTimeDisplays();
+        setInterval(updateTimeDisplays, 1000);
 
         /**
          * Render the list of holidays for the current month and year based on the selected country.
