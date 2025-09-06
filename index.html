@@ -5113,28 +5113,12 @@ function shareToX(){
   window.open(shareUrl, '_blank');
 }
 function shareToInstagram(){
-  var message = 'Join me on #GoodPeoplenPlaces!';
-  if (navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(message).then(function(){
-      alert('Share message copied! Open Instagram and paste it with your photo.');
-    }, function(){
-      alert('Copy this message: ' + message);
-    });
-  } else {
-    alert('Copy this message: ' + message);
-  }
+  // Open the brand's Instagram profile in a new tab
+  window.open('https://www.instagram.com/goodpeoplen74', '_blank');
 }
 function shareToTikTok(){
-  var message = 'Join me on #GoodPeoplenPlaces!';
-  if (navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(message).then(function(){
-      alert('Share message copied! Open TikTok and paste it with your video.');
-    }, function(){
-      alert('Copy this message: ' + message);
-    });
-  } else {
-    alert('Copy this message: ' + message);
-  }
+  // Open the brand's TikTok profile in a new tab
+  window.open('https://www.tiktok.com/@goodpeoplenplaces', '_blank');
 }
 </script>
 <!-- Join gating & profile header injection -->
