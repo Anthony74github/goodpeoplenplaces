@@ -126,7 +126,16 @@
         <!-- The image is absolutely positioned relative to the hero container so that it does not interfere with existing layout or functionality. The small size ensures it acts as a subtle branding element. -->
         <!-- Use the provided transparent logo file for the site branding. -->
         <img src="./logo-transparent.png" alt="Good People n Places logo"
-             class="absolute bottom-2 left-2 w-24 h-24 sm:bottom-2 sm:left-2 sm:w-32 sm:h-32 md:bottom-4 md:left-4 md:w-40 md:h-40 lg:bottom-4 lg:left-4 lg:w-48 lg:h-48 xl:bottom-4 xl:left-4 xl:w-64 xl:h-64 object-contain pointer-events-none" />
+             class="absolute bottom-2 left-2 w-24 h-24 sm:bottom-2 sm:left-2 sm:w-32 sm:h-32 md:bottom-4 md:left-4 md:w-40 md:h-40 lg:bottom-4 lg:left-4 lg:w-48 lg:h-48 xl:bottom-4 xl:left-4 xl:w-64 xl:h-64 object-contain shadow-lg hover:scale-105 transition duration-300 cursor-pointer"
+             onclick="document.getElementById('social-links').classList.toggle('hidden')" />
+
+        <!-- Hidden social links pop-up; shows icons for Facebook, Instagram, TikTok and X when the logo is clicked. -->
+        <div id="social-links" class="hidden absolute left-2 bottom-[8rem] sm:bottom-[9rem] md:bottom-[10rem] bg-white bg-opacity-90 text-gray-800 p-3 rounded-lg shadow-xl space-y-2">
+            <div class="flex items-center space-x-2 cursor-default"><span class="text-xl">📘</span><span class="font-medium">Facebook</span></div>
+            <div class="flex items-center space-x-2 cursor-default"><span class="text-xl">📸</span><span class="font-medium">Instagram</span></div>
+            <div class="flex items-center space-x-2 cursor-default"><span class="text-xl">🎵</span><span class="font-medium">TikTok</span></div>
+            <div class="flex items-center space-x-2 cursor-default"><span class="text-xl">✖️</span><span class="font-medium">X</span></div>
+        </div>
     </header>
 
     <!-- Main navigation bar: provides quick links to key sections.  It is sticky so it remains visible at the top when scrolling.  Each tab is styled like a slanted folder with the same gradient as the Start Exploring button and reacts on hover. -->
