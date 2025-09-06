@@ -126,11 +126,11 @@
         <!-- The image is absolutely positioned relative to the hero container so that it does not interfere with existing layout or functionality. The small size ensures it acts as a subtle branding element. -->
         <!-- Use the provided transparent logo file for the site branding. -->
         <img src="./logo-transparent.png" alt="Good People n Places logo"
-             class="absolute bottom-2 left-2 w-24 h-24 sm:bottom-2 sm:left-2 sm:w-32 sm:h-32 md:bottom-4 md:left-4 md:w-40 md:h-40 lg:bottom-4 lg:left-4 lg:w-48 lg:h-48 xl:bottom-4 xl:left-4 xl:w-64 xl:h-64 object-contain rounded-full shadow-md hover:scale-105 transition duration-300 cursor-pointer"
+             class="absolute bottom-2 left-2 w-24 h-24 sm:bottom-2 sm:left-2 sm:w-32 sm:h-32 md:bottom-4 md:left-4 md:w-40 md:h-40 lg:bottom-4 lg:left-4 lg:w-48 lg:h-48 xl:bottom-4 xl:left-4 xl:w-64 xl:h-64 object-contain rounded-full shadow-md hover:scale-105 transition duration-300 cursor-pointer z-20"
              onclick="document.getElementById('social-links').classList.toggle('hidden')" />
 
         <!-- Hidden social links pop-up; shows icons for Facebook, Instagram, TikTok and X when the logo is clicked. -->
-        <div id="social-links" class="hidden absolute bottom-2 left-28 sm:left-32 md:left-40 lg:left-48 xl:left-64 bg-white bg-opacity-90 text-gray-800 p-3 rounded-lg shadow-xl flex flex-row items-center space-x-4">
+        <div id="social-links" class="hidden absolute bottom-2 left-2 sm:left-28 md:left-40 lg:left-48 xl:left-64 bg-white bg-opacity-90 text-gray-800 p-3 rounded-lg shadow-xl flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4">
             <a href="https://www.facebook.com/profile.php?id=61580330943209" target="_blank" class="flex items-center space-x-2 cursor-pointer">
                 <img src="https://cdn.jsdelivr.net/npm/simple-icons@v7/icons/facebook.svg" alt="Facebook logo" class="w-6 h-6" />
                 <span class="font-medium">Facebook</span>
@@ -5108,9 +5108,8 @@ function shareToFacebook(){
   window.open(shareUrl, '_blank');
 }
 function shareToX(){
-  var text = encodeURIComponent('Join me on #GoodPeoplenPlaces! ' + window.location.href);
-  var shareUrl = 'https://twitter.com/intent/tweet?text=' + text;
-  window.open(shareUrl, '_blank');
+  // Open the brand's X (Twitter) profile in a new tab
+  window.open('https://x.com/GoodPeople1974', '_blank');
 }
 function shareToInstagram(){
   // Open the brand's Instagram profile in a new tab
