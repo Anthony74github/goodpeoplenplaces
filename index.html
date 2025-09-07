@@ -304,8 +304,10 @@
     </section>
 
     <!-- Fullscreen photo viewer modal -->
-    <div id="photo-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center hidden z-50">
+    <div id="photo-modal" class="fixed inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center hidden z-50">
         <img id="modal-image" src="" alt="Expanded photo" class="max-w-full max-h-full rounded-lg">
+        <!-- Caption for photo description and uploader name -->
+        <p id="modal-caption" class="text-gray-200 text-lg mt-4 text-center"></p>
         <button id="close-modal" class="absolute top-4 right-4 text-white text-4xl font-bold">&times;</button>
     </div>
 
@@ -5831,10 +5833,50 @@ function shareToTikTok(){
         const galleryGrid = document.getElementById('gallery-grid');
         const modal = document.getElementById('photo-modal');
         const modalImage = document.getElementById('modal-image');
+        // Caption element inside the modal for displaying description and uploader name
+        const modalCaption = document.getElementById('modal-caption');
         const closeModal = document.getElementById('close-modal');
         const addPhotoBtn = document.getElementById('add-photo-btn');
         const galleryUpload = document.getElementById('gallery-upload');
         const galleryTitle = document.getElementById('gallery-title');
+
+        // Retrieve any persisted gallery items from localStorage
+        let storedItems = [];
+        try {
+          const saved = localStorage.getItem('galleryItems');
+          if (saved) {
+            storedItems = JSON.parse(saved);
+          }
+        } catch (_) {}
+
+        // Helper function to render a gallery item (photo, description and uploader name)
+        function renderGalleryItem(item, prepend = false) {
+          if (!galleryGrid) return;
+          const div = document.createElement('div');
+          div.className = 'relative group gallery-item';
+          // Store description and name on the container for later retrieval
+          div.dataset.description = item.description || '';
+          div.dataset.name = item.name || '';
+          const img = document.createElement('img');
+          img.src = item.image;
+          img.className = 'w-full h-32 object-cover cursor-pointer rounded';
+          const del = document.createElement('button');
+          del.className = 'absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs p-1 rounded hidden group-hover:block delete-btn';
+          del.textContent = '\u00d7';
+          div.appendChild(img);
+          div.appendChild(del);
+          // Insert at beginning or end
+          if (prepend && galleryGrid.firstChild) {
+            galleryGrid.prepend(div);
+          } else {
+            galleryGrid.appendChild(div);
+          }
+        }
+
+        // Render persisted items on page load
+        if (storedItems.length && galleryGrid) {
+          storedItems.forEach(function(item) { renderGalleryItem(item, false); });
+        }
 
         // Handle click on gallery items
         if (galleryGrid) {
@@ -5848,12 +5890,29 @@ function shareToTikTok(){
                 return;
               }
               const item = e.target.closest('.gallery-item');
-              if (item) { item.remove(); }
+              if (item) {
+                // Capture image source before removing
+                const src = item.querySelector('img').src;
+                item.remove();
+                // Remove from persisted list
+                storedItems = storedItems.filter(function(it) { return it.image !== src; });
+                try { localStorage.setItem('galleryItems', JSON.stringify(storedItems)); } catch (_) {}
+              }
               return;
             }
             // If image clicked
             if (e.target.tagName.toLowerCase() === 'img') {
               modalImage.src = e.target.src;
+              // When showing the image, also display its description and uploader name in the caption
+              if (modalCaption) {
+                const parent = e.target.closest('.gallery-item');
+                const desc = parent ? parent.dataset.description : '';
+                const uploader = parent ? parent.dataset.name : '';
+                const parts = [];
+                if (desc) parts.push(desc);
+                if (uploader) parts.push('— ' + uploader);
+                modalCaption.textContent = parts.join(' ');
+              }
               modal.classList.remove('hidden');
             }
           });
@@ -5895,18 +5954,18 @@ function shareToTikTok(){
             if (!file) return;
             const reader = new FileReader();
             reader.onload = function(ev) {
-              const div = document.createElement('div');
-              div.className = 'relative group gallery-item';
-              const img = document.createElement('img');
-              img.src = ev.target.result;
-              img.className = 'w-full h-32 object-cover cursor-pointer rounded';
-              const del = document.createElement('button');
-              del.className = 'absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs p-1 rounded hidden group-hover:block delete-btn';
-              del.textContent = '\u00d7';
-              div.appendChild(img);
-              div.appendChild(del);
-              // Prepend new photo to the grid
-              if (galleryGrid) { galleryGrid.prepend(div); }
+              // Prompt for description and uploader name
+              const description = prompt('Enter a short description for this photo (optional):') || '';
+              const uploader = prompt('Enter your name (optional):') || '';
+              const newItem = {
+                image: ev.target.result,
+                description: description.trim(),
+                name: uploader.trim()
+              };
+              // Render and persist the new item
+              renderGalleryItem(newItem, true);
+              storedItems.unshift(newItem);
+              try { localStorage.setItem('galleryItems', JSON.stringify(storedItems)); } catch (_) {}
             };
             reader.readAsDataURL(file);
             // Reset input value
@@ -5932,6 +5991,15 @@ function shareToTikTok(){
             } else if (password !== null) {
               alert('Incorrect password. Only the site owner can manage photos.');
             }
+          });
+        }
+
+        // Force the mailto link to open the default email client when clicked.  Some browsers may prevent direct mailto anchors.
+        const mailtoLink = document.querySelector('a[href^="mailto:goodpeoplenplaces@gmail.com"]');
+        if (mailtoLink) {
+          mailtoLink.addEventListener('click', function(ev) {
+            ev.preventDefault();
+            window.location.href = 'mailto:goodpeoplenplaces@gmail.com';
           });
         }
       });
