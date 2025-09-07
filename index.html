@@ -303,6 +303,12 @@
         </div>
     </section>
 
+    <!-- Fullscreen photo viewer modal -->
+    <div id="photo-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center hidden z-50">
+        <img id="modal-image" src="" alt="Expanded photo" class="max-w-full max-h-full rounded-lg">
+        <button id="close-modal" class="absolute top-4 right-4 text-white text-4xl font-bold">&times;</button>
+    </div>
+
     <!-- Tools Section -->
     <section id="tools-section" class="py-16 px-4 md:px-6 bg-gray-100">
         <div class="container mx-auto max-w-6xl">
@@ -601,8 +607,42 @@
             </div>
             <!-- Added margin to give more space below the social media buttons -->
             <p class="text-center text-gray-700 mt-6">Use <span class="font-semibold text-blue-600">#GoodPeoplenPlaces</span> on your posts so we can feature them!</p>
-            <div id="social-gallery" class="mt-8">
-                <!-- Insert your social media gallery embed code (e.g., from Taggbox or SnapWidget) here to show posts tagged with #GoodPeoplenPlaces -->
+            <div id="social-gallery" class="mt-8 space-y-4">
+                <!-- Gallery heading and optional contact message -->
+                <h3 class="text-2xl font-semibold text-center">Take a Look at Our Good People n&nbsp;Places Gallery</h3>
+                <p class="text-center text-gray-700">It’s not just a photo — it’s part of your journey. Help us improve or request to feature your photo by emailing us at <a href="mailto:goodpeoplenplaces@gmail.com" class="text-blue-600 underline">goodpeoplenplaces@gmail.com</a>.</p>
+                <!-- Responsive gallery grid: 5 columns on large screens, fewer on smaller screens -->
+                <div id="gallery-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 max-h-[450px] overflow-y-auto">
+                    <!-- Placeholder images for the gallery; each wrapped in a relative container for potential delete overlay -->
+                    <div class="relative group gallery-item"><img src="./gallery/img_1.png" class="w-full h-32 object-cover cursor-pointer rounded" alt="Gallery placeholder" /><button class="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs p-1 rounded hidden group-hover:block delete-btn">&times;</button></div>
+                    <div class="relative group gallery-item"><img src="./gallery/img_2.png" class="w-full h-32 object-cover cursor-pointer rounded" alt="Gallery placeholder" /><button class="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs p-1 rounded hidden group-hover:block delete-btn">&times;</button></div>
+                    <div class="relative group gallery-item"><img src="./gallery/img_3.png" class="w-full h-32 object-cover cursor-pointer rounded" alt="Gallery placeholder" /><button class="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs p-1 rounded hidden group-hover:block delete-btn">&times;</button></div>
+                    <div class="relative group gallery-item"><img src="./gallery/img_4.png" class="w-full h-32 object-cover cursor-pointer rounded" alt="Gallery placeholder" /><button class="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs p-1 rounded hidden group-hover:block delete-btn">&times;</button></div>
+                    <div class="relative group gallery-item"><img src="./gallery/img_5.png" class="w-full h-32 object-cover cursor-pointer rounded" alt="Gallery placeholder" /><button class="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs p-1 rounded hidden group-hover:block delete-btn">&times;</button></div>
+                    <div class="relative group gallery-item"><img src="./gallery/img_6.png" class="w-full h-32 object-cover cursor-pointer rounded" alt="Gallery placeholder" /><button class="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs p-1 rounded hidden group-hover:block delete-btn">&times;</button></div>
+                    <div class="relative group gallery-item"><img src="./gallery/img_7.png" class="w-full h-32 object-cover cursor-pointer rounded" alt="Gallery placeholder" /><button class="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs p-1 rounded hidden group-hover:block delete-btn">&times;</button></div>
+                    <div class="relative group gallery-item"><img src="./gallery/img_8.png" class="w-full h-32 object-cover cursor-pointer rounded" alt="Gallery placeholder" /><button class="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs p-1 rounded hidden group-hover:block delete-btn">&times;</button></div>
+                    <div class="relative group gallery-item"><img src="./gallery/img_9.png" class="w-full h-32 object-cover cursor-pointer rounded" alt="Gallery placeholder" /><button class="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs p-1 rounded hidden group-hover:block delete-btn">&times;</button></div>
+                    <div class="relative group gallery-item"><img src="./gallery/img_10.png" class="w-full h-32 object-cover cursor-pointer rounded" alt="Gallery placeholder" /><button class="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs p-1 rounded hidden group-hover:block delete-btn">&times;</button></div>
+                    <div class="relative group gallery-item"><img src="./gallery/img_11.png" class="w-full h-32 object-cover cursor-pointer rounded" alt="Gallery placeholder" /><button class="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs p-1 rounded hidden group-hover:block delete-btn">&times;</button></div>
+                    <div class="relative group gallery-item"><img src="./gallery/img_12.png" class="w-full h-32 object-cover cursor-pointer rounded" alt="Gallery placeholder" /><button class="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs p-1 rounded hidden group-hover:block delete-btn">&times;</button></div>
+                    <div class="relative group gallery-item"><img src="./gallery/img_13.png" class="w-full h-32 object-cover cursor-pointer rounded" alt="Gallery placeholder" /><button class="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs p-1 rounded hidden group-hover:block delete-btn">&times;</button></div>
+                    <div class="relative group gallery-item"><img src="./gallery/img_14.png" class="w-full h-32 object-cover cursor-pointer rounded" alt="Gallery placeholder" /><button class="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs p-1 rounded hidden group-hover:block delete-btn">&times;</button></div>
+                    <div class="relative group gallery-item"><img src="./gallery/img_15.png" class="w-full h-32 object-cover cursor-pointer rounded" alt="Gallery placeholder" /><button class="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs p-1 rounded hidden group-hover:block delete-btn">&times;</button></div>
+                    <div class="relative group gallery-item"><img src="./gallery/img_16.png" class="w-full h-32 object-cover cursor-pointer rounded" alt="Gallery placeholder" /><button class="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs p-1 rounded hidden group-hover:block delete-btn">&times;</button></div>
+                    <div class="relative group gallery-item"><img src="./gallery/img_17.png" class="w-full h-32 object-cover cursor-pointer rounded" alt="Gallery placeholder" /><button class="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs p-1 rounded hidden group-hover:block delete-btn">&times;</button></div>
+                    <div class="relative group gallery-item"><img src="./gallery/img_18.png" class="w-full h-32 object-cover cursor-pointer rounded" alt="Gallery placeholder" /><button class="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs p-1 rounded hidden group-hover:block delete-btn">&times;</button></div>
+                    <div class="relative group gallery-item"><img src="./gallery/img_19.png" class="w-full h-32 object-cover cursor-pointer rounded" alt="Gallery placeholder" /><button class="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs p-1 rounded hidden group-hover:block delete-btn">&times;</button></div>
+                    <div class="relative group gallery-item"><img src="./gallery/img_20.png" class="w-full h-32 object-cover cursor-pointer rounded" alt="Gallery placeholder" /><button class="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs p-1 rounded hidden group-hover:block delete-btn">&times;</button></div>
+                    <div class="relative group gallery-item"><img src="./gallery/img_21.png" class="w-full h-32 object-cover cursor-pointer rounded" alt="Gallery placeholder" /><button class="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs p-1 rounded hidden group-hover:block delete-btn">&times;</button></div>
+                    <div class="relative group gallery-item"><img src="./gallery/img_22.png" class="w-full h-32 object-cover cursor-pointer rounded" alt="Gallery placeholder" /><button class="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs p-1 rounded hidden group-hover:block delete-btn">&times;</button></div>
+                    <div class="relative group gallery-item"><img src="./gallery/img_23.png" class="w-full h-32 object-cover cursor-pointer rounded" alt="Gallery placeholder" /><button class="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs p-1 rounded hidden group-hover:block delete-btn">&times;</button></div>
+                    <div class="relative group gallery-item"><img src="./gallery/img_24.png" class="w-full h-32 object-cover cursor-pointer rounded" alt="Gallery placeholder" /><button class="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs p-1 rounded hidden group-hover:block delete-btn">&times;</button></div>
+                    <div class="relative group gallery-item"><img src="./gallery/img_25.png" class="w-full h-32 object-cover cursor-pointer rounded" alt="Gallery placeholder" /><button class="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs p-1 rounded hidden group-hover:block delete-btn">&times;</button></div>
+                </div>
+                <!-- File input and admin button to add photos; visible for site owner only -->
+                <input type="file" id="gallery-upload" accept="image/*" class="hidden">
+                <button id="add-photo-btn" type="button" class="button-gradient text-white py-2 px-4 rounded-md shadow-md hover:scale-105 transition duration-300">Add Photo (Admin Only)</button>
             </div>
         </div>
     </section>
@@ -5767,6 +5807,79 @@ function shareToTikTok(){
           if (!social.contains(event.target) && !(logo && logo.contains(event.target))) {
             social.classList.add('hidden');
           }
+        }
+      });
+    </script>
+
+    <!-- Script for gallery functionality: view images, add and delete photos -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const galleryGrid = document.getElementById('gallery-grid');
+        const modal = document.getElementById('photo-modal');
+        const modalImage = document.getElementById('modal-image');
+        const closeModal = document.getElementById('close-modal');
+        const addPhotoBtn = document.getElementById('add-photo-btn');
+        const galleryUpload = document.getElementById('gallery-upload');
+
+        // Handle click on gallery items
+        if (galleryGrid) {
+          galleryGrid.addEventListener('click', function(e) {
+            // If delete button clicked
+            if (e.target.classList.contains('delete-btn')) {
+              e.stopPropagation();
+              const item = e.target.closest('.gallery-item');
+              if (item) { item.remove(); }
+              return;
+            }
+            // If image clicked
+            if (e.target.tagName.toLowerCase() === 'img') {
+              modalImage.src = e.target.src;
+              modal.classList.remove('hidden');
+            }
+          });
+        }
+
+        // Close modal when clicking on close button or outside image
+        if (closeModal) {
+          closeModal.addEventListener('click', function() {
+            modal.classList.add('hidden');
+          });
+        }
+        if (modal) {
+          modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+              modal.classList.add('hidden');
+            }
+          });
+        }
+
+        // Handle Add Photo button click
+        if (addPhotoBtn && galleryUpload) {
+          addPhotoBtn.addEventListener('click', function() {
+            galleryUpload.click();
+          });
+          galleryUpload.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+              const div = document.createElement('div');
+              div.className = 'relative group gallery-item';
+              const img = document.createElement('img');
+              img.src = ev.target.result;
+              img.className = 'w-full h-32 object-cover cursor-pointer rounded';
+              const del = document.createElement('button');
+              del.className = 'absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs p-1 rounded hidden group-hover:block delete-btn';
+              del.textContent = '\u00d7';
+              div.appendChild(img);
+              div.appendChild(del);
+              // Prepend new photo to the grid
+              if (galleryGrid) { galleryGrid.prepend(div); }
+            };
+            reader.readAsDataURL(file);
+            // Reset input value
+            galleryUpload.value = '';
+          });
         }
       });
     </script>
