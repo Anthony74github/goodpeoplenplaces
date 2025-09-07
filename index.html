@@ -5840,14 +5840,10 @@ function shareToTikTok(){
         const galleryUpload = document.getElementById('gallery-upload');
         const galleryTitle = document.getElementById('gallery-title');
 
-        // Retrieve any persisted gallery items from localStorage
+        // Fetch initial gallery items from a JSON file to ensure photos load across devices.
+        // Then merge any locally stored items (admin uploads) on top.  This requires the site owner to update
+        // gallery/gallery.json whenever new photos should be visible to all visitors.
         let storedItems = [];
-        try {
-          const saved = localStorage.getItem('galleryItems');
-          if (saved) {
-            storedItems = JSON.parse(saved);
-          }
-        } catch (_) {}
 
         // Helper function to render a gallery item (photo, description and uploader name)
         function renderGalleryItem(item, prepend = false) {
@@ -5873,10 +5869,39 @@ function shareToTikTok(){
           }
         }
 
-        // Render persisted items on page load
-        if (storedItems.length && galleryGrid) {
-          storedItems.forEach(function(item) { renderGalleryItem(item, false); });
+        // Load gallery items from gallery.json then localStorage
+        async function loadInitialGallery() {
+          const jsonItems = [];
+          // Fetch the JSON file containing initial gallery items
+          try {
+            const response = await fetch('./gallery/gallery.json');
+            if (response.ok) {
+              const data = await response.json();
+              if (Array.isArray(data)) {
+                data.forEach(function(item) {
+                  jsonItems.push(item);
+                });
+              }
+            }
+          } catch (e) {
+            console.error('Failed to load gallery.json', e);
+          }
+          // Render items from the JSON file
+          if (galleryGrid) {
+            jsonItems.forEach(function(item) { renderGalleryItem(item, false); });
+          }
+          // Load persisted items from localStorage and render them on top
+          try {
+            const saved = localStorage.getItem('galleryItems');
+            if (saved) {
+              storedItems = JSON.parse(saved) || [];
+              storedItems.forEach(function(item) { renderGalleryItem(item, true); });
+            }
+          } catch (_) {}
         }
+
+        // Invoke the loader on page load
+        loadInitialGallery();
 
         // Handle click on gallery items
         if (galleryGrid) {
