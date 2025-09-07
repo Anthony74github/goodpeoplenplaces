@@ -575,14 +575,16 @@
                     </div>
                 </form>
             </div>
-            <div id="comments-display" class="space-y-6">
+            <!-- Comments display container is hidden by default to avoid showing an empty bar. When comments are added via JavaScript, the hidden class can be removed dynamically. -->
+            <div id="comments-display" class="space-y-6 hidden">
                 <!-- User comments will be appended here -->
             </div>
 
             <!-- Social sharing call‑to‑action for #GoodPeoplenPlaces -->
             <!-- Added transform and duration classes to give the box a subtle hover effect -->
             <div class="bg-white bg-opacity-90 p-6 rounded-lg shadow-xl hover:shadow-2xl transition-shadow transform transition-transform duration-300 hover:-translate-y-1 mb-6">
-            <p class="text-lg md:text-xl text-gray-700 mb-4 text-center">It’s not just a photo — It’s part of Your Journey. Share your travel adventures with us!</p>
+            <!-- Removed the explanatory sentence under the social call-to-action to streamline the layout -->
+
             <div class="flex justify-center flex-wrap gap-4">
                 <!-- Facebook share button -->
                 <button onclick="shareToFacebook()" class="flex items-center space-x-2 button-gradient text-white py-2 px-4 rounded-md shadow-md hover:scale-105 transition duration-300">
@@ -607,10 +609,15 @@
             </div>
             <!-- Added margin to give more space below the social media buttons -->
             <p class="text-center text-gray-700 mt-6">Use <span class="font-semibold text-blue-600">#GoodPeoplenPlaces</span> on your posts so we can feature them!</p>
-            <div id="social-gallery" class="mt-8 space-y-4">
+            <!-- Contact email placed directly under the hashtag call-out -->
+            <p class="text-center text-gray-700 mt-2">Help us improve or request to feature your photo by emailing us at <a href="mailto:goodpeoplenplaces@gmail.com" class="text-blue-600 underline">goodpeoplenplaces@gmail.com</a>.</p>
+            </div>
+            <!-- Moved gallery container outside of the call-to-action box -->
+            <!-- Gallery section: adjust margin-top to reduce excessive spacing and position it neatly after the Share Your Trip call-to-action -->
+            <div id="social-gallery" class="mt-6 space-y-4">
                 <!-- Gallery heading and optional contact message -->
                 <h3 class="text-2xl font-semibold text-center">Take a Look at Our Good People n&nbsp;Places Gallery</h3>
-                <p class="text-center text-gray-700">It’s not just a photo — it’s part of your journey. Help us improve or request to feature your photo by emailing us at <a href="mailto:goodpeoplenplaces@gmail.com" class="text-blue-600 underline">goodpeoplenplaces@gmail.com</a>.</p>
+                <!-- The gallery no longer includes the explanatory sentence; contact info will be placed below the hashtag call-out. -->
                 <!-- Responsive gallery grid: 5 columns on large screens, fewer on smaller screens -->
                 <div id="gallery-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 max-h-[450px] overflow-y-auto">
                     <!-- Placeholder images for the gallery; each wrapped in a relative container for potential delete overlay -->
