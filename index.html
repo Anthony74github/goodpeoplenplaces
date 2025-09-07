@@ -591,7 +591,7 @@
                 <!-- Explanatory tagline positioned beneath the gallery title -->
                 <p class="text-lg md:text-xl text-gray-700 text-center mt-2">It’s not just a photo — It’s part of Your Journey. Share your travel adventures with us!</p>
                 <!-- Responsive gallery grid: 5 columns on large screens, fewer on smaller screens -->
-                <div id="gallery-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 max-h-[450px] overflow-y-auto">
+                <div id="gallery-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 max-h-[450px] overflow-y-auto border border-gray-300 shadow-lg rounded-lg p-4 bg-white bg-opacity-90">
                     <!-- Placeholder images for the gallery; each wrapped in a relative container for potential delete overlay -->
                     <div class="relative group gallery-item"><img src="./gallery/img_1.png" class="w-full h-32 object-cover cursor-pointer rounded" alt="Gallery placeholder" /><button class="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs p-1 rounded hidden group-hover:block delete-btn">&times;</button></div>
                     <div class="relative group gallery-item"><img src="./gallery/img_2.png" class="w-full h-32 object-cover cursor-pointer rounded" alt="Gallery placeholder" /><button class="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs p-1 rounded hidden group-hover:block delete-btn">&times;</button></div>
@@ -627,7 +627,9 @@
 
             <!-- Social sharing call‑to‑action for #GoodPeoplenPlaces -->
             <!-- Added transform and duration classes to give the box a subtle hover effect.  This box now appears after the gallery so that the photos are showcased first. -->
-            <div class="bg-white bg-opacity-90 p-6 rounded-lg shadow-xl hover:shadow-2xl transition-shadow transform transition-transform duration-300 hover:-translate-y-1 mb-6">
+            <div class="bg-white bg-opacity-90 p-6 rounded-lg shadow-xl hover:shadow-2xl transition-shadow transform transition-transform duration-300 hover:-translate-y-1 mt-8 mb-6">
+              <!-- Hashtag call to action placed above the buttons -->
+              <p class="text-center text-gray-700 mb-4">Use <span class="font-semibold text-blue-600">#GoodPeoplenPlaces</span> on your posts so we can feature them!</p>
               <div class="flex justify-center flex-wrap gap-4">
                 <!-- Facebook share button -->
                 <button onclick="shareToFacebook()" class="flex items-center space-x-2 button-gradient text-white py-2 px-4 rounded-md shadow-md hover:scale-105 transition duration-300">
@@ -650,8 +652,8 @@
                   <span>X</span>
                 </button>
               </div>
-              <p class="text-center text-gray-700 mt-6">Use <span class="font-semibold text-blue-600">#GoodPeoplenPlaces</span> on your posts so we can feature them!</p>
-              <p class="text-center text-gray-700 mt-2">Help us improve or request to feature your photo by emailing us at <a href="mailto:goodpeoplenplaces@gmail.com" class="text-blue-600 underline">goodpeoplenplaces@gmail.com</a>.</p>
+              <!-- Contact email remains at the bottom of the call to action -->
+              <p class="text-center text-gray-700 mt-4">Help us improve or request to feature your photo by emailing us at <a href="mailto:goodpeoplenplaces@gmail.com" onclick="window.location.href='mailto:goodpeoplenplaces@gmail.com';" class="text-blue-600 underline">goodpeoplenplaces@gmail.com</a>.</p>
             </div>
         </div>
     </section>
@@ -5878,7 +5880,7 @@ function shareToTikTok(){
             if (!isAdmin) {
               const password = prompt('Enter admin password to manage photos:');
               // Simple password check; replace "secret" with your desired password
-              if (password === 'secretpassword') {
+              if (password === '*Gunny74*') {
                 isAdmin = true;
               } else {
                 alert('Incorrect password. Only the site owner can add photos.');
@@ -5920,7 +5922,7 @@ function shareToTikTok(){
             }
             const password = prompt('Enter admin password to manage photos:');
             // Replace "secretpassword" with your own secret
-            if (password === 'secretpassword') {
+            if (password === '*Gunny74*') {
               isAdmin = true;
               // Reveal the Add Photo button once authenticated
               if (addPhotoBtn) {
