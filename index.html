@@ -633,7 +633,7 @@
                 </button>
               </div>
               <!-- Contact email remains at the bottom of the call to action -->
-              <p class="text-center text-gray-700 mt-4">Help us improve or request to feature your photo by emailing us at <a href="mailto:goodpeoplenplaces@gmail.com" onclick="window.location.href='mailto:goodpeoplenplaces@gmail.com';" class="text-blue-600 underline">goodpeoplenplaces@gmail.com</a>.</p>
+              <p class="text-center text-gray-700 mt-4">Help us improve or request to feature your photo by emailing us at <a href="mailto:goodpeoplenplaces@gmail.com" class="text-blue-600 underline">goodpeoplenplaces@gmail.com</a>.</p>
             </div>
         </div>
     </section>
@@ -5997,14 +5997,7 @@ function shareToTikTok(){
           });
         }
 
-        // Force the mailto link to open the default email client when clicked.  Some browsers may prevent direct mailto anchors.
-        const mailtoLink = document.querySelector('a[href^="mailto:goodpeoplenplaces@gmail.com"]');
-        if (mailtoLink) {
-          mailtoLink.addEventListener('click', function(ev) {
-            ev.preventDefault();
-            window.location.href = 'mailto:goodpeoplenplaces@gmail.com';
-          });
-        }
+        // No extra handler needed for mailto: the anchor href will trigger the email client automatically.
       });
     </script>
 </body>
