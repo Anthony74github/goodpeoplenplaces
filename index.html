@@ -633,7 +633,7 @@
                 </button>
               </div>
               <!-- Contact email remains at the bottom of the call to action -->
-              <p class="text-center text-gray-700 mt-4">Help us improve or request to feature your photo by emailing us at <a href="mailto:goodpeoplenplaces@gmail.com" onclick="return handleEmailClick(event);" class="text-blue-600 underline">goodpeoplenplaces@gmail.com</a>.</p>
+              <p class="text-center text-gray-700 mt-4">Help us improve or request to feature your photo by emailing us at <a href="mailto:goodpeoplenplaces@gmail.com" onclick="window.location.href='mailto:goodpeoplenplaces@gmail.com';" class="text-blue-600 underline">goodpeoplenplaces@gmail.com</a>.</p>
             </div>
         </div>
     </section>
@@ -2946,6 +2946,8 @@
             ,'Sweden': { lat: 60.0, lon: 15.0, locationDesc: 'Sweden is a Scandinavian country in northern Europe made up of a long peninsula and thousands of coastal islands.', weatherDesc: 'It has a temperate climate with cold, snowy winters and mild to warm summers.' }
             ,'Egypt': { lat: 26.0, lon: 30.0, locationDesc: 'Egypt lies in north‑eastern Africa with the Sinai Peninsula bridging Africa and Asia; the Nile River flows northwards through the country to the Mediterranean Sea.', weatherDesc: 'It has a hot desert climate with minimal rainfall; coastal areas along the Mediterranean and Red Sea are cooler and more humid.' }
             ,'South Africa': { lat: -29.0, lon: 24.0, locationDesc: 'South Africa occupies the southern tip of the African continent, bordered by both the Atlantic and Indian Oceans and completely surrounding Lesotho and Eswatini.', weatherDesc: 'It experiences a variety of climates—from Mediterranean in the south‑west to subtropical along the east coast and semi‑arid in the interior.' }
+            ,'Philippines': { lat: 13.0, lon: 122.0, locationDesc: 'The Philippines is an archipelago in Southeast Asia consisting of more than 7,000 islands in the western Pacific Ocean.', weatherDesc: 'It has a tropical maritime climate with hot, humid weather year‑round and seasonal monsoons.' }
+            ,'Singapore': { lat: 1.3521, lon: 103.8198, locationDesc: 'Singapore is a city‑state in Southeast Asia located on the southern tip of the Malay Peninsula, comprised of one main island and many surrounding islets.', weatherDesc: 'It has a tropical rainforest climate with uniformly hot, humid conditions and abundant rainfall throughout the year.' }
         };
 
         /**
@@ -5051,32 +5053,6 @@ function renderEssentialPhrasesForCategory() {
         });
     </script>
 
-    <!-- Helper functions for the contact email link.  These functions detect mobile devices and open Gmail in a popup on desktop only. -->
-    <script>
-      // Detect if the user is on a mobile device based on the userAgent string.
-      function isMobileDevice() {
-        return /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-      }
-
-      // Handle click on the contact email link.  On mobile, allow the default mailto link to proceed.  On desktop, open a Gmail compose popup.
-      function handleEmailClick(ev) {
-        // If on mobile, let the browser handle the mailto link normally
-        if (isMobileDevice()) {
-          return true;
-        }
-        // Otherwise, prevent default navigation and open the Gmail compose window
-        ev.preventDefault();
-        openEmailPopup();
-        return false;
-      }
-
-      // Open Gmail compose in a popup window with predefined fields.  This method works even if no desktop mail client is configured.
-      function openEmailPopup() {
-        var url = 'https://mail.google.com/mail/?view=cm&fs=1&to=goodpeoplenplaces@gmail.com&su=Inquiry%20from%20your%20website&body=Hello%2C%20I%20am%20writing%20to%20you%20about...';
-        window.open(url, 'EmailCompose', 'width=600,height=800,scrollbars=yes');
-      }
-    </script>
-
 <!-- Join Modal -->
 <div id="join-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden items-center justify-center">
   <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl w-[92%] max-w-md">
@@ -6023,6 +5999,14 @@ function shareToTikTok(){
           });
         }
 
+        // Force the mailto link to open the default email client when clicked.  Some browsers may prevent direct mailto anchors.
+        const mailtoLink = document.querySelector('a[href^="mailto:goodpeoplenplaces@gmail.com"]');
+        if (mailtoLink) {
+          mailtoLink.addEventListener('click', function(ev) {
+            ev.preventDefault();
+            window.location.href = 'mailto:goodpeoplenplaces@gmail.com';
+          });
+        }
       });
     </script>
 </body>
