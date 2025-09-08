@@ -73,5 +73,50 @@
     "image": "./gallery/Vegas Ball Street.jpg",
     "description": "Las Vegas Street Ball",
     "name": "Tony74"
+  },
+  {
+    "image": "./gallery/GoldnWhite Temple.jpg",
+    "description": "Golden White Temple, Thailand",
+    "name": "Tony74"
+  },
+  {
+    "image": "./gallery/Heritage Lake, Menifee.jpg",
+    "description": "Heritage Lake, Menifee",
+    "name": "Tony74"
+  },
+  {
+    "image": "./gallery/MoutainsToVegas.jpg",
+    "description": "Enjoying the View to Vegas",
+    "name": "Tony74"
+  },
+  {
+    "image": "./gallery/Murrieta Snow View.jpg",
+    "description": "Murrieta Snow View",
+    "name": "Tony74"
+  },
+  {
+    "image": "./gallery/Nakhon Pathom.jpg",
+    "description": "Taking a Walk in Nakhon Pathom",
+    "name": "Tony74"
+  },
+  {
+    "image": "./gallery/NightCityView.png",
+    "description": "Night City View, Bangkok",
+    "name": "Tony74"
+  },
+  {
+    "image": "./gallery/Rajadamnern Stadium.jpg",
+    "description": "Rajadamnern Stadium, Bangkok",
+    "name": "Tony74"
+  },
+  {
+    "image": "./gallery/Thai River Bridge.jpg",
+    "description": "River Bridg, Thailand",
+    "name": "Tony74"
+  },
+  {
+    "image": "./gallery/Thai Sun.jpg",
+    "description": "Thailand Sunset",
+    "name": "Tony74"
   }
 ]
