@@ -5050,6 +5050,19 @@ function renderEssentialPhrasesForCategory() {
             }
         });
     </script>
+    <script>
+      // Ensure the email link always opens the default mail client, even when users Ctrl‑click it on desktop.
+      document.addEventListener('DOMContentLoaded', function() {
+        const emailLink = document.querySelector('a[href="mailto:goodpeoplenplaces@gmail.com"]');
+        if (emailLink) {
+          emailLink.addEventListener('click', function(ev) {
+            // Always trigger the mail client in the current tab; prevent opening a new tab on Ctrl‑click
+            ev.preventDefault();
+            window.location.href = emailLink.getAttribute('href');
+          });
+        }
+      });
+    </script>
 
 <!-- Join Modal -->
 <div id="join-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden items-center justify-center">
