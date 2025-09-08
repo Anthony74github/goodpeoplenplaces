@@ -306,8 +306,8 @@
     <!-- Fullscreen photo viewer modal -->
     <div id="photo-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center hidden z-50">
         <div class="relative">
-            <!-- The modal image uses object-contain to ensure portrait photos fit without cropping -->
-            <img id="modal-image" src="" alt="Expanded photo" class="max-w-full max-h-full object-contain rounded-lg">
+            <!-- The modal image uses object-contain and viewport‑limited dimensions to ensure portrait photos fit without cropping.  It won't exceed 90% of the viewport width/height. -->
+            <img id="modal-image" src="" alt="Expanded photo" class="object-contain max-h-[90vh] max-w-[90vw] rounded-lg">
         </div>
         <!-- Caption overlay positioned within the modal, not inside the image container to avoid cropping issues -->
         <div id="modal-caption" class="absolute top-4 left-4 bg-black bg-opacity-60 text-gray-200 text-sm p-2 rounded z-50 pointer-events-none"></div>
