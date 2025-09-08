@@ -596,7 +596,8 @@
                 <!-- Explanatory tagline positioned beneath the gallery title -->
                 <p class="text-lg md:text-xl text-gray-700 text-center mt-2">It’s not just a photo — It’s part of Your Journey. Share your travel adventures with us!</p>
                 <!-- Responsive gallery grid: 5 columns on large screens, fewer on smaller screens -->
-                <div id="gallery-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 max-h-[450px] overflow-y-auto border border-gray-300 shadow-lg rounded-lg p-4 bg-white bg-opacity-90">
+                <!-- Ensure the gallery remains scrollable across devices by setting an explicit max-height and overflow via inline style.  Tailwind's arbitrary values may not always apply if configuration changes. -->
+                <div id="gallery-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 border border-gray-300 shadow-lg rounded-lg p-4 bg-white bg-opacity-90" style="max-height:450px; overflow-y:auto;">
                     <!-- Gallery items will be dynamically populated via JavaScript from gallery.json and localStorage. -->
                 </div>
                 <!-- File input and admin button to add photos; visible for site owner only -->
