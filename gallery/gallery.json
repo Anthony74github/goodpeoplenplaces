@@ -6,7 +6,7 @@
   },
   {
     "image": "./gallery/Wat Arun.jpg",
-    "description": "Wat Arun Temple",
+    "description": "Wat Arun Temple, Bangkok",
     "name": "Tony74"
   },
   {
@@ -26,7 +26,52 @@
   },
   {
     "image": "./gallery/Laying Budda.png",
-    "description": "Laying Buddha",
+    "description": "Laying Buddha, Bangkok",
+    "name": "Tony74"
+  }
+  {
+    "image": "./gallery/CampPen Field2.jpg",
+    "description": "California Road Trip",
+    "name": "Tony74"
+  },
+  {
+    "image": "./gallery/Murrieta Snow View.jpg",
+    "description": "Snow Mountain View, Murrieta",
+    "name": "Tony74"
+  },
+  {
+    "image": "./gallery/Ontario Concert.jpg",
+    "description": "Ontario Concert",
+    "name": "Tony74"
+  },
+  {
+    "image": "./gallery/Padres.jpg",
+    "description": "Padres...Play Ball!",
+    "name": "Tony74"
+  },
+  {
+    "image": "./gallery/RainForestCafe.jpg",
+    "description": "Rain Forest Cafe, Ontario",
+    "name": "Tony74"
+  },
+  {
+    "image": "./gallery/Rams Stadium.jpg",
+    "description": "Rams Stadium, L.A.",
+    "name": "Tony74"
+  },
+  {
+    "image": "./gallery/Stadium Swim.jpg",
+    "description": "Stadium Swim, Las Vegas",
+    "name": "Tony74"
+  },
+  {
+    "image": "./gallery/Vegas Ball.jpg",
+    "description": "Vegas Ball, Las Vegas",
+    "name": "Tony74"
+  },
+  {
+    "image": "./gallery/Vegas Ball Street.jpg",
+    "description": "Las Vegas Street Ball",
     "name": "Tony74"
   }
 ]
