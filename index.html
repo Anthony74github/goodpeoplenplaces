@@ -633,7 +633,7 @@
                 </button>
               </div>
               <!-- Contact email remains at the bottom of the call to action -->
-              <p class="text-center text-gray-700 mt-4">Help us improve or request to feature your photo by emailing us at <a href="#" class="text-blue-600 underline" onclick="composeEmail(); return false;">goodpeoplenplaces@gmail.com</a>.</p>
+              <p class="text-center text-gray-700 mt-4">Help us improve or request to feature your photo by emailing us at <a href="#" onclick="openEmailPopup(); return false;" class="text-blue-600 underline">goodpeoplenplaces@gmail.com</a>.</p>
             </div>
         </div>
     </section>
@@ -5051,18 +5051,17 @@ function renderEssentialPhrasesForCategory() {
         });
     </script>
 
+    <!-- Removed composeEmail helper: the contact email now links directly to Gmail's compose view, which works on systems without a default mail client. -->
+
     <script>
       /**
-       * Compose an email using a mailto link with a predefined subject and body.  This helper is called
-       * when the user clicks the contact email link.  It constructs a mailto URL and sets
-       * window.location to it, ensuring the default email client (if configured) is triggered.
+       * Open Gmail's compose window in a small pop‑up.  This provides a cross‑platform alternative to mailto links when
+       * the user's system lacks a default email client.  It prepopulates the "to", "subject" and "body" fields.
        */
-      function composeEmail() {
-        var email = 'goodpeoplenplaces@gmail.com';
-        var subject = encodeURIComponent('Inquiry from your website');
-        var body = encodeURIComponent('Hello, I am writing to you about...');
-        var mailtoLink = 'mailto:' + email + '?subject=' + subject + '&body=' + body;
-        window.location.href = mailtoLink;
+      function openEmailPopup() {
+        var url = 'https://mail.google.com/mail/?view=cm&fs=1&to=goodpeoplenplaces@gmail.com&su=Inquiry%20from%20your%20website&body=Hello%2C%20I%20am%20writing%20to%20you%20about...';
+        // Specify a window name and dimensions.  If blocked by a popup blocker, the link will simply do nothing.
+        window.open(url, 'EmailCompose', 'width=600,height=800,scrollbars=yes');
       }
     </script>
     <!-- No additional script needed for mailto: the inline onclick handler on the anchor handles launching the email client across devices -->
