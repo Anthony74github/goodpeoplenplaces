@@ -5055,11 +5055,15 @@ function renderEssentialPhrasesForCategory() {
       document.addEventListener('DOMContentLoaded', function() {
         const emailLink = document.querySelector('a[href="mailto:goodpeoplenplaces@gmail.com"]');
         if (emailLink) {
-          emailLink.addEventListener('click', function(ev) {
-            // Always trigger the mail client in the current tab; prevent opening a new tab on Ctrl‑click
+          // Handler to open the mail client regardless of modifier keys or click type
+          const openMail = function(ev) {
             ev.preventDefault();
             window.location.href = emailLink.getAttribute('href');
-          });
+          };
+          // Handle regular click
+          emailLink.addEventListener('click', openMail);
+          // Handle auxclick (e.g., middle click or ctrl+click on some browsers)
+          emailLink.addEventListener('auxclick', openMail);
         }
       });
     </script>
