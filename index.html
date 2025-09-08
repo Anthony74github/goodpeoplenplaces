@@ -633,7 +633,7 @@
                 </button>
               </div>
               <!-- Contact email remains at the bottom of the call to action -->
-              <p class="text-center text-gray-700 mt-4">Help us improve or request to feature your photo by emailing us at <a href="#" onclick="openEmailPopup(); return false;" class="text-blue-600 underline">goodpeoplenplaces@gmail.com</a>.</p>
+              <p class="text-center text-gray-700 mt-4">Help us improve or request to feature your photo by emailing us at <a href="mailto:goodpeoplenplaces@gmail.com" onclick="return handleEmailClick(event);" class="text-blue-600 underline">goodpeoplenplaces@gmail.com</a>.</p>
             </div>
         </div>
     </section>
@@ -5051,20 +5051,31 @@ function renderEssentialPhrasesForCategory() {
         });
     </script>
 
-    <!-- Removed composeEmail helper: the contact email now links directly to Gmail's compose view, which works on systems without a default mail client. -->
-
+    <!-- Helper functions for the contact email link.  These functions detect mobile devices and open Gmail in a popup on desktop only. -->
     <script>
-      /**
-       * Open Gmail's compose window in a small pop‑up.  This provides a cross‑platform alternative to mailto links when
-       * the user's system lacks a default email client.  It prepopulates the "to", "subject" and "body" fields.
-       */
+      // Detect if the user is on a mobile device based on the userAgent string.
+      function isMobileDevice() {
+        return /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+      }
+
+      // Handle click on the contact email link.  On mobile, allow the default mailto link to proceed.  On desktop, open a Gmail compose popup.
+      function handleEmailClick(ev) {
+        // If on mobile, let the browser handle the mailto link normally
+        if (isMobileDevice()) {
+          return true;
+        }
+        // Otherwise, prevent default navigation and open the Gmail compose window
+        ev.preventDefault();
+        openEmailPopup();
+        return false;
+      }
+
+      // Open Gmail compose in a popup window with predefined fields.  This method works even if no desktop mail client is configured.
       function openEmailPopup() {
         var url = 'https://mail.google.com/mail/?view=cm&fs=1&to=goodpeoplenplaces@gmail.com&su=Inquiry%20from%20your%20website&body=Hello%2C%20I%20am%20writing%20to%20you%20about...';
-        // Specify a window name and dimensions.  If blocked by a popup blocker, the link will simply do nothing.
         window.open(url, 'EmailCompose', 'width=600,height=800,scrollbars=yes');
       }
     </script>
-    <!-- No additional script needed for mailto: the inline onclick handler on the anchor handles launching the email client across devices -->
 
 <!-- Join Modal -->
 <div id="join-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden items-center justify-center">
@@ -6012,7 +6023,6 @@ function shareToTikTok(){
           });
         }
 
-        // No extra handler needed for mailto: the anchor href will trigger the email client automatically.
       });
     </script>
 </body>
