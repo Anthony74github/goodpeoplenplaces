@@ -633,7 +633,7 @@
                 </button>
               </div>
               <!-- Contact email remains at the bottom of the call to action -->
-              <p class="text-center text-gray-700 mt-4">Help us improve or request to feature your photo by emailing us at <a href="mailto:goodpeoplenplaces@gmail.com" onclick="window.location.href='mailto:goodpeoplenplaces@gmail.com';" class="text-blue-600 underline">goodpeoplenplaces@gmail.com</a>.</p>
+              <p class="text-center text-gray-700 mt-4">Help us improve or request to feature your photo by emailing us at <a href="mailto:goodpeoplenplaces@gmail.com" class="text-blue-600 underline">goodpeoplenplaces@gmail.com</a>.</p>
             </div>
         </div>
     </section>
@@ -5999,12 +5999,25 @@ function shareToTikTok(){
           });
         }
 
-        // Force the mailto link to open the default email client when clicked.  Some browsers may prevent direct mailto anchors.
+        // Handle mail link differently on mobile versus desktop.  Detect whether the user is on a mobile device and
+        // open either the native mail client or a Gmail compose window accordingly.  If no default mail client is
+        // configured on desktop, the Gmail compose window provides a convenient alternative.
         const mailtoLink = document.querySelector('a[href^="mailto:goodpeoplenplaces@gmail.com"]');
         if (mailtoLink) {
-          mailtoLink.addEventListener('click', function(ev) {
+          mailtoLink.addEventListener('click', function (ev) {
             ev.preventDefault();
-            window.location.href = 'mailto:goodpeoplenplaces@gmail.com';
+            const email = 'goodpeoplenplaces@gmail.com';
+            const subject = encodeURIComponent('Inquiry from your website');
+            const body = encodeURIComponent('Hello, I am writing to you about...');
+            const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            if (isMobile) {
+              // Use the mailto scheme on mobile devices to open the default mail app
+              window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+            } else {
+              // Open Gmail compose in a small pop-up window for desktop users
+              const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${subject}&body=${body}`;
+              window.open(gmailUrl, 'emailCompose', 'width=800,height=600');
+            }
           });
         }
       });
