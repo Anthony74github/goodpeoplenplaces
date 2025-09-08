@@ -633,7 +633,7 @@
                 </button>
               </div>
               <!-- Contact email remains at the bottom of the call to action -->
-              <p class="text-center text-gray-700 mt-4">Help us improve or request to feature your photo by emailing us at <a href="mailto:goodpeoplenplaces@gmail.com" class="text-blue-600 underline">goodpeoplenplaces@gmail.com</a>.</p>
+              <p class="text-center text-gray-700 mt-4">Help us improve or request to feature your photo by emailing us at <a href="mailto:goodpeoplenplaces@gmail.com" onclick="event.preventDefault(); window.location.href=this.href;" class="text-blue-600 underline">goodpeoplenplaces@gmail.com</a>.</p>
             </div>
         </div>
     </section>
@@ -5050,23 +5050,7 @@ function renderEssentialPhrasesForCategory() {
             }
         });
     </script>
-    <script>
-      // Ensure the email link always opens the default mail client, even when users Ctrl‑click it on desktop.
-      document.addEventListener('DOMContentLoaded', function() {
-        const emailLink = document.querySelector('a[href="mailto:goodpeoplenplaces@gmail.com"]');
-        if (emailLink) {
-          // Handler to open the mail client regardless of modifier keys or click type
-          const openMail = function(ev) {
-            ev.preventDefault();
-            window.location.href = emailLink.getAttribute('href');
-          };
-          // Handle regular click
-          emailLink.addEventListener('click', openMail);
-          // Handle auxclick (e.g., middle click or ctrl+click on some browsers)
-          emailLink.addEventListener('auxclick', openMail);
-        }
-      });
-    </script>
+    <!-- No additional script needed for mailto: the inline onclick handler on the anchor handles launching the email client across devices -->
 
 <!-- Join Modal -->
 <div id="join-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden items-center justify-center">
