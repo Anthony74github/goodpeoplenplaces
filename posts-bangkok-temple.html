@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Na Kham Songkran & Little Temples — Good People n Places</title>
+  <meta name="description" content="A quiet temple moment during Songkran in Na Kham, Renu Nakhon District, Nakhon Phanom — where serenity meets celebration."/>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;color:#1f2937;background:#f7fafc}
+    header.small{background:#0f172a;padding:16px;border-bottom:1px solid #e5e7eb}
+    header .brand{display:flex;align-items:center;gap:12px;justify-content:center}
+    header img{width:64px;height:auto}
+    header a{color:#a5b4fc;margin:0 8px;text-decoration:none;font-weight:600}
+    header a:hover{text-decoration:underline}
+    .container{max-width:900px;margin:0 auto;padding:16px}
+    .hero-img{width:100%;height:auto;border-radius:10px}
+    .meta{color:#6b7280;font-size:13px;margin:8px 0 16px}
+    .tags .tag{display:inline-block;font-size:12px;background:#eef2ff;color:#3730a3;padding:2px 8px;border-radius:999px;margin-right:6px;border:1px solid #c7d2fe}
+    footer{padding:40px 16px;color:#6b7280;text-align:center}
+    form{margin-top:24px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:12px}
+    input,textarea{width:100%;box-sizing:border-box;padding:10px;border:1px solid #e5e7eb;border-radius:8px;margin:6px 0}
+    button{background:#2563eb;color:#fff;border:none;padding:10px 16px;border-radius:8px;cursor:pointer}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+  </style>
+</head>
+<body>
+  <header class="small" role="banner">
+    <div class="brand">
+      <img src="./logo-transparent.png" alt="Good People n Places logo"/>
+      <nav aria-label="Main">
+        <a href="./index.html">Home</a>
+        <a href="./blog.html">Blog</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container" role="main">
+    <article>
+      <h1>Na Kham, Songkran & the Little Temples That Glow</h1>
+      <div class="meta">Published: 2025-04-17 • Tags:
+        <span class="tags">
+          <span class="tag">Good People</span>
+          <span class="tag">Good Places</span>
+          <span class="tag">Travel Tips</span>
+        </span>
+      </div>
+
+      <img src="./gallery/Nakhon Pathom.jpg" alt="Small temple in Na Kham with golden Buddha statue" class="hero-img" loading="lazy"/>
+
+      <p style="line-height:1.65; margin-top:16px;">
+        Even in Thailand’s tiniest towns, temples are never far — tiny sanctuaries stitched into everyday life.
+        In Na Kham, Renu Nakhon District of Nakhon Phanom, I wandered into this quiet courtyard during
+        Songkran and felt a hush beneath the laughter: incense curling into the palm-bright sky, a gold Buddha
+        catching sunlight like a wink, and neighbors pausing to pour water and trade smiles before the music
+        swelled again. The kindness here is immediate — polite nods, curious grins, and invitations to taste
+        something sweet or dance a little badly. Thailand wears serenity and celebration in the same heartbeat;
+        in Na Kham, both met me at this small shrine, reminding me that joy is a tradition and welcome is a way
+        of life.
+      </p>
+
+      <section aria-labelledby="comments-title">
+        <h2 id="comments-title" style="margin-top:28px;">Share a thought</h2>
+        <form onsubmit="alert('Thanks for your note! (Demo only)'); return false;">
+          <label class="sr-only" for="name">Name</label>
+          <input id="name" type="text" placeholder="Name (optional)"/>
+          <label class="sr-only" for="comment">Comment</label>
+          <textarea id="comment" rows="4" placeholder="Your comment…"></textarea>
+          <button type="submit">Post comment</button>
+        </form>
+      </section>
+    </article>
+  </main>
+
+  <footer>© Good People n Places • Keep the good vibes rolling.</footer>
+</body>
+</html>
