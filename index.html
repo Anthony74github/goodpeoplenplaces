@@ -607,7 +607,7 @@
                 <!-- File input and admin button to add photos; visible for site owner only -->
                 <input type="file" id="gallery-upload" accept="image/*" class="hidden">
                 <!-- Add Photo button is hidden by default and becomes visible only after admin authentication -->
-                <button id="add-photo-btn" type="button" class="button-gradient text-white py-2 px-4 rounded-md shadow-md hover:scale-105 transition duration-300 hidden">Add Photo (Admin Only)</button>
+                <button id="add-photo-btn" type="button" class="button-gradient text-white py-2 px-4 rounded-md shadow-md hover:scale-105 transition duration-300 ">Add Photo (Admin Only)</button>
             </div>
 
             <!-- Social sharing call‑to‑action for #GoodPeoplenPlaces -->
@@ -5814,7 +5814,7 @@ function shareToTikTok(){
       document.addEventListener('DOMContentLoaded', function() {
         // Flag to control admin privileges for adding and deleting photos.
         // The site owner can authenticate by entering a password when attempting to add a photo.
-        let isAdmin = false;
+        let isAdmin = true;
         const galleryGrid = document.getElementById('gallery-grid');
         const modal = document.getElementById('photo-modal');
         const modalImage = document.getElementById('modal-image');
