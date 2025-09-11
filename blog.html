@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Good Vibes, Good Views — Blog | Good People n Places</title>
+  <meta name="description" content="Good Vibes, Good Views — the official blog of Good People n Places. Inspirational stories, travel tips and gear we love."/>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;color:#1f2937;background:#f7fafc}
+    a{color:#2563eb;text-decoration:none}a:hover{text-decoration:underline}
+    header.small-hero{background:#0f172a;padding:24px 16px;border-bottom:1px solid #e5e7eb}
+    header .brand{text-align:center}
+    header .brand img{width:88px;height:auto;display:block;margin:0 auto 8px}
+    header .brand h1{margin:0;font-size:24px;color:#e5e7eb;letter-spacing:.02em}
+    nav.top{display:flex;gap:16px;justify-content:center;margin-top:8px;flex-wrap:wrap}
+    nav.top a{color:#a5b4fc;font-weight:600}
+    nav.top a.active{color:#fff}
+    .container{max-width:1000px;margin:0 auto;padding:16px}
+    .post-card{display:grid;grid-template-columns:160px 1fr;gap:16px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:12px;margin:12px 0;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+    .post-card img{width:160px;height:120px;object-fit:cover;border-radius:8px}
+    .meta{font-size:12px;color:#6b7280;margin:0 0 6px}
+    .tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .tag{font-size:12px;background:#eef2ff;color:#3730a3;padding:2px 8px;border-radius:999px;border:1px solid #c7d2fe}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+    .load-state{text-align:center;color:#6b7280;padding:16px}
+    footer{padding:40px 16px;color:#6b7280;text-align:center}
+  </style>
+</head>
+<body>
+  <header class="small-hero" role="banner" aria-label="Good People n Places">
+    <div class="brand">
+      <img src="./logo-transparent.png" alt="Good People n Places logo" loading="lazy"/>
+      <h1>Good Vibes, Good Views</h1>
+    </div>
+    <nav class="top" aria-label="Main">
+      <a href="./index.html">Home</a>
+      <a href="./index.html#destination-section">Destinations</a>
+      <a href="./index.html#tools-section">Travel Tools</a>
+      <a href="./index.html#learn-more-section">Learn More</a>
+      <a href="./index.html#comments-section">Share</a>
+      <a href="./blog.html" class="active">Blog</a>
+    </nav>
+  </header>
+
+  <main class="container" id="content" role="main">
+    <h2 class="sr-only">Latest posts</h2>
+    <div id="post-list"></div>
+    <div id="loader" class="load-state">Loading more posts…</div>
+  </main>
+
+  <footer>© Good People n Places — Stories that spark your next journey.</footer>
+
+  <script>
+    // Minimal infinite scroll using a local array; replace with JSON or CMS in future.
+    const POSTS = [
+      {
+        slug: 'posts-bangkok-temple.html',
+        title: 'Na Kham Songkran & the Little Temples That Glow',
+        date: '2025-04-17',
+        tags: ['Good People','Good Places','Travel Tips'],
+        excerpt: "In a small town in Na Kham, Renu Nakhon District, Nakhon Phanom, a quiet corner bursts into color during Songkran. Temples aren’t just landmarks here — they’re living rooms for the community.",
+        image: './gallery/Nakhon Pathom.jpg'
+      }
+    ];
+    let page = 0;
+    const PAGE_SIZE = 5;
+    const listEl = document.getElementById('post-list');
+    const loader = document.getElementById('loader');
+
+    function renderCard(item) {
+      const card = document.createElement('article');
+      card.className = 'post-card';
+      card.innerHTML = `
+        <a href="${item.slug}"><img src="${item.image}" alt="Featured image for ${item.title}" loading="lazy"></a>
+        <div>
+          <div class="meta">${new Date(item.date).toLocaleDateString()}</div>
+          <h3 style="margin:4px 0 8px;"><a href="${item.slug}">${item.title}</a></h3>
+          <p style="margin:0 0 6px; color:#374151;">${item.excerpt}</p>
+          <a href="${item.slug}">Read more →</a>
+          <div class="tags">${item.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>
+        </div>`;
+      listEl.appendChild(card);
+    }
+
+    function loadMore() {
+      const start = page * PAGE_SIZE;
+      const items = POSTS.slice(start, start + PAGE_SIZE);
+      items.forEach(renderCard);
+      page++;
+      if (page * PAGE_SIZE >= POSTS.length) {
+        loader.textContent = "You’re all caught up.";
+        observer.disconnect();
+      }
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) loadMore();
+      });
+    });
+    observer.observe(loader);
+  </script>
+</body>
+</html>
