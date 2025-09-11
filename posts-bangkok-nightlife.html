@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bangkok After Dark — Good People n Places</title>
+  <meta name="description" content="Bangkok’s vibrant nightlife: sky bars, river lights, and easy conversation with new friends."/>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;color:#1f2937;background:#f7fafc}
+    header.small{background:#0f172a;padding:16px;border-bottom:1px solid #e5e7eb}
+    header .brand{display:flex;align-items:center;gap:12px;justify-content:center}
+    /* Keep post-page logo sizing consistent with your existing post file */
+    header img{width:128px;height:auto}
+    header a{color:#a5b4fc;margin:0 8px;text-decoration:none;font-weight:600}
+    header a:hover{text-decoration:underline}
+    .container{max-width:900px;margin:0 auto;padding:16px}
+    .hero-img{width:100%;height:auto;border-radius:10px}
+    .meta{color:#6b7280;font-size:13px;margin:8px 0 16px}
+    .tags .tag{display:inline-block;font-size:12px;background:#eef2ff;color:#3730a3;padding:2px 8px;border-radius:999px;margin-right:6px;border:1px solid #c7d2fe}
+    footer{padding:40px 16px;color:#6b7280;text-align:center}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+  </style>
+</head>
+<body>
+  <header class="small" role="banner">
+    <div class="brand">
+      <img src="./logo-transparent.png" alt="Good People n Places logo"/>
+      <nav aria-label="Main">
+        <a href="./index.html">Home</a>
+        <a href="./blog.html">Blog</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container" role="main">
+    <article>
+      <h1>Bangkok After Dark: Rooftops, River Light, and New Friends</h1>
+      <div class="meta">Published: 2025-09-10 • Tags:
+        <span class="tags">
+          <span class="tag">Good Places</span>
+          <span class="tag">Travel Tips</span>
+          <span class="tag">Nightlife</span>
+        </span>
+      </div>
+
+      <img src="./gallery/NightCityView.jpg" alt="Bangkok skyline at night from a rooftop bar" class="hero-img" loading="lazy"/>
+
+      <p style="line-height:1.65; margin-top:16px;">
+        Bangkok hums after sunset. Lantern-lit sois spill into neon avenues, tuk-tuks purr by with laughter in the backseat,
+        and sky bars float like quiet islands above the river’s ribbon of lights. Order a cold drink, lean into the breeze,
+        and the city introduces you to someone new before you finish the first sip. It’s easy here—smiles at the night market,
+        quick chats over street noodles, a shared photo of the glittering skyline from a rooftop that seems close to the stars.
+        For travelers who love to socialize, Bangkok is effortless: welcoming, lively, and full of vantage points that make
+        every conversation feel cinematic. Come for the views; stay for the energy and the people who turn a night out into a story.
+      </p>
+
+      <p>If you have any questions or comments email me at
+        <a href="mailto:goodpeoplenplaces@gmail.com"
+           onclick="event.preventDefault(); const email='goodpeoplenplaces@gmail.com'; const subject=encodeURIComponent('Inquiry from your website'); const body=encodeURIComponent('Hello, I am writing to you about...'); const isMobile=/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent); if (isMobile) { window.location.href = 'mailto:'+ email + '?subject='+ subject + '&body=' + body; } else { const gmailUrl = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + email + '&su=' + subject + '&body=' + body; window.open(gmailUrl, 'emailCompose', 'width=800,height=600'); }"
+        >goodpeoplenplaces@gmail.com</a>.
+      </p>
+    </article>
+  </main>
+
+  <footer>© Good People n Places • Keep the good vibes rolling.</footer>
+</body>
+</html>
