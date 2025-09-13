@@ -61,6 +61,16 @@
   <script>
     // Minimal infinite scroll using a local array; replace with JSON or CMS in future.
     const POSTS = [
+      // ADD the new post object below, inside the existing POSTS array:
+      {
+  slug: 'posts-bangkok-nightlife.html',
+  title: 'Bangkok After Dark: Rooftops & River Light',
+  // Provide a custom theme to display instead of the date.
+  theme: 'Night Lights',
+  tags: ['Thailand','Bangkok','Good Places','Travel Tips','Nightlife'],
+  excerpt: 'Bangkok hums after sunset—lantern-lit sois, sky bars above the Chao Phraya, and new friends everywhere you look.',
+  image: './gallery/NightCityView.jpg'
+     },
       {
         slug: 'posts-bangkok-temple.html',
         title: 'Nakhon Phanom & the Little Temples That Glow',
@@ -69,17 +79,7 @@
         tags: ['Thailand','Nakhon Phanom','Good People','Good Places','Travel Tips'],
         excerpt: "In a small town in Na Kham, Renu Nakhon District, Nakhon Phanom, a quiet corner bursts into color during Songkran Festival. Temples aren’t just landmarks here — they’re living rooms for the community.",
         image: './gallery/Nakhon Pathom.jpg'
-      },
-      // ADD the new post object below, inside the existing POSTS array:
-{
-  slug: 'posts-bangkok-nightlife.html',
-  title: 'Bangkok After Dark: Rooftops & River Light',
-  // Provide a custom theme to display instead of the date.
-  theme: 'Night Lights',
-  tags: ['Thailand','Bangkok','Good Places','Travel Tips','Nightlife'],
-  excerpt: 'Bangkok hums after sunset—lantern-lit sois, sky bars above the Chao Phraya, and new friends everywhere you look.',
-  image: './gallery/NightCityView.jpg'
-}
+      }
     ];
     let page = 0;
     const PAGE_SIZE = 5;
