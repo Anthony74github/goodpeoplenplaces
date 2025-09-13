@@ -3,78 +3,60 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!--
-    This page provides a single blog entry about Las Vegas. It follows the
-    general styling and layout conventions of the rest of the Good People n
-    Places site by re‑using a similar header, navigation and container
-    styles. Only the contents of this file have been added; no changes
-    were made to any other site files or scripts.
-  -->
-  <title>Experience The Sphere and All the Buzz of Las Vegas | Good People n Places</title>
+  <title>Experience The Sphere and All the Buzz of Las Vegas — Good People n Places</title>
   <meta name="description" content="Experience Las Vegas’s unrivaled entertainment scene, from world‑class shows and casinos to the awe‑inspiring Sphere, and learn why the city’s high costs are its biggest drawback."/>
   <style>
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;color:#1f2937;background:#f7fafc}
-    a{color:#2563eb;text-decoration:none}
-    a:hover{text-decoration:underline}
-    header.small-hero{background:#0f172a;padding:24px 16px;border-bottom:1px solid #e5e7eb}
-    header .brand{text-align:center}
-    header .brand img{width:264px;height:auto;display:block;margin:0 auto 8px}
-    header .brand h1{margin:0;font-size:24px;color:#e5e7eb;letter-spacing:.02em}
-    nav.top{display:flex;gap:16px;justify-content:center;margin-top:8px;flex-wrap:wrap}
-    nav.top a{color:#a5b4fc;font-weight:600}
-    nav.top a.active{color:#fff}
-    .container{max-width:800px;margin:0 auto;padding:16px}
-    .post-detail h2{margin-top:0;font-size:28px;color:#111827}
-    .post-detail img{width:100%;height:auto;border-radius:10px;margin:16px 0}
-    .post-detail p{font-size:16px;line-height:1.5;color:#374151;margin-bottom:1rem}
+    header.small{background:#0f172a;padding:16px;border-bottom:1px solid #e5e7eb}
+    header .brand{display:flex;align-items:center;gap:12px;justify-content:center}
+    /* Increase logo size on post pages for better branding */
+    header img{width:128px;height:auto}
+    header a{color:#a5b4fc;margin:0 8px;text-decoration:none;font-weight:600}
+    header a:hover{text-decoration:underline}
+    .container{max-width:900px;margin:0 auto;padding:16px}
+    .hero-img{width:100%;height:auto;border-radius:10px}
+    .meta{color:#6b7280;font-size:13px;margin:8px 0 16px}
+    .tags .tag{display:inline-block;font-size:12px;background:#eef2ff;color:#3730a3;padding:2px 8px;border-radius:999px;margin-right:6px;border:1px solid #c7d2fe}
     footer{padding:40px 16px;color:#6b7280;text-align:center}
+    form{margin-top:24px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:12px}
+    input,textarea{width:100%;box-sizing:border-box;padding:10px;border:1px solid #e5e7eb;border-radius:8px;margin:6px 0}
+    button{background:#2563eb;color:#fff;border:none;padding:10px 16px;border-radius:8px;cursor:pointer}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
   </style>
 </head>
 <body>
-  <header class="small-hero" role="banner" aria-label="Good People n Places">
+  <header class="small" role="banner">
     <div class="brand">
-      <img src="./logo-transparent.png" alt="Good People n Places logo" loading="lazy" />
-      <main class="container" role="main">
-    <article class="post-detail">
-      <h2>Experience The Sphere and All the Buzz of Las Vegas</h2>
-      <!--
-        The image used here resides in the gallery folder to mirror the
-        structure of other posts. It showcases the high‑tech Sphere in
-        Las Vegas, hinting at the city’s endless appetite for spectacle.
-      -->
-      <h1>Good Vibes, Good Views</h1>
-    <div class="meta">Published: 09-08-2025 • Tags:
+      <img src="./logo-transparent.png" alt="Good People n Places logo"/>
+      <nav aria-label="Main">
+        <a href="./index.html">Home</a>
+        <a href="./blog.html">Blog</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container" role="main">
+    <article>
+      <h1>Las Vegas: Mega‑Entertainment &amp; The Sphere</h1>
+      <div class="meta">Published: 09-08-2025 • Tags:
         <span class="tags">
-          <span class="tag">Thailand</span>
-          <span class="tag">Nakhon Phanom</span>
-          <span class="tag">Good People</span>
+          <span class="tag">USA</span>
+          <span class="tag">Las Vegas</span>
           <span class="tag">Good Places</span>
+          <span class="tag">Nightlife</span>
           <span class="tag">Travel Tips</span>
         </span>
       </div>
-      <img src="./gallery/Vegas Ball.jpg" alt="Experience The Sphere and All the Buzz of Las Vegas" loading="lazy" />
-      <p>
-        Las Vegas has always billed itself as the world entertainment
-        capital, and today it seems determined to prove it. From global pop
-        residencies and major sports events to tech conventions, there is
-        always a reason for the Strip to pulse with energy. The skyline is now
-        dominated by the luminous Sphere&nbsp;&mdash; a venue that can transform
-        into anything from a glittering planet to a swirling ocean and serves
-        as a billboard for the city and its larger&ndash;than&ndash;life ambitions.
-        Wander a few blocks and you will find mega resorts, luxury shopping,
-        Michelin starred restaurants and, of course, casinos buzzing day and
-        night. Beyond the tables and slots, Vegas nightlife ranges from EDM
-        superclubs to intimate speakeasies and live shows that rotate with each
-        season. The city does have a downside: prices. Resort fees, show
-        tickets and even cocktails have climbed in recent years, making a
-        weekend trip far more expensive than it used to be. Still, if your
-        budget allows, few places offer such a kaleidoscope of spectacle in one
-        glittering package.
+
+      <img src="./gallery/Vegas Ball.jpg" alt="The Sphere and the lights of Las Vegas" class="hero-img" loading="lazy"/>
+
+      <p style="line-height:1.65; margin-top:16px;">
+        Las&nbsp;Vegas has always billed itself as the world entertainment capital, and today it seems determined to prove it. From global pop residencies and major sports events to tech conventions, there is always a reason for the Strip to pulse with energy. The skyline is now dominated by the luminous Sphere&nbsp;&mdash; a venue that can transform into anything from a glittering planet to a swirling ocean and serves as a billboard for the city and its larger&ndash;than&ndash;life ambitions. Wander a few blocks and you will find mega resorts, luxury shopping, Michelin starred restaurants and, of course, casinos buzzing day and night. Beyond the tables and slots, Vegas nightlife ranges from EDM superclubs to intimate speakeasies and live shows that rotate with each season. The city does have a downside: prices. Resort fees, show tickets and even cocktails have climbed in recent years, making a weekend trip far more expensive than it used to be. Still, if your budget allows, few places offer such a kaleidoscope of spectacle in one glittering package.
       </p>
+      <p>If you have any questions or comments email me at <a href="mailto:goodpeoplenplaces@gmail.com" onclick="event.preventDefault(); const email='goodpeoplenplaces@gmail.com'; const subject=encodeURIComponent('Inquiry from your website'); const body=encodeURIComponent('Hello, I am writing to you about...'); const isMobile=/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent); if (isMobile) { window.location.href = 'mailto:'+ email + '?subject='+ subject + '&body=' + body; } else { const gmailUrl = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + email + '&su=' + subject + '&body=' + body; window.open(gmailUrl, 'emailCompose', 'width=800,height=600'); }">goodpeoplenplaces@gmail.com</a>.</p>
     </article>
-    <a href="./blog.html">&larr; Back to Blog</a>
   </main>
 
-  <footer>© Good People n Places — Stories that spark your next journey.</footer>
+  <footer>© Good People n Places • Keep the good vibes rolling.</footer>
 </body>
 </html>
