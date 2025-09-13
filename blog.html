@@ -65,6 +65,8 @@
         slug: 'posts-bangkok-temple.html',
         title: 'Nakhon Phanom & the Little Temples That Glow',
         date: '2025-04-17',
+        // For this post, provide a custom theme to display instead of the date.
+        theme: 'What will you discover?',
         tags: ['Thailand','Nakhon Phanom','Good People','Good Places','Travel Tips'],
         excerpt: "In a small town in Na Kham, Renu Nakhon District, Nakhon Phanom, a quiet corner bursts into color during Songkran Festival. Temples aren’t just landmarks here — they’re living rooms for the community.",
         image: './gallery/Nakhon Pathom.jpg'
@@ -74,6 +76,8 @@
   slug: 'posts-bangkok-nightlife.html',
   title: 'Bangkok After Dark: Rooftops & River Light',
   date: '2025-04-25',
+  // Provide a custom theme to display instead of the date.
+  theme: 'Night Lights',
   tags: ['Thailand','Bangkok','Good Places','Travel Tips','Nightlife'],
   excerpt: 'Bangkok hums after sunset—lantern-lit sois, sky bars above the Chao Phraya, and new friends everywhere you look.',
   image: './gallery/NightCityView.jpg'
@@ -90,7 +94,8 @@
       card.innerHTML = `
         <a href="${item.slug}"><img src="${item.image}" alt="Featured image for ${item.title}" loading="lazy"></a>
         <div>
-          <div class="meta">${new Date(item.date).toLocaleDateString()}</div>
+          <!-- Display a custom theme if provided; otherwise fall back to formatted date -->
+          <div class="meta">${item.theme ? item.theme : new Date(item.date).toLocaleDateString()}</div>
           <h3 style="margin:4px 0 8px;"><a href="${item.slug}">${item.title}</a></h3>
           <p style="margin:0 0 6px; color:#374151;">${item.excerpt}</p>
           <a href="${item.slug}">Read more →</a>
